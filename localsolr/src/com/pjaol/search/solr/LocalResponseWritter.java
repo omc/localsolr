@@ -12,16 +12,15 @@ import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.search.Searcher;
-import org.apache.solr.request.*;
-import org.apache.solr.schema.FieldType;
+import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.XML;
+import org.apache.solr.request.QueryResponseWriter;
+import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.request.SolrQueryResponse;
 import org.apache.solr.schema.IndexSchema;
-import org.apache.solr.schema.SchemaField;
 import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocList;
-import org.apache.solr.search.DocSet;
 import org.apache.solr.search.SolrIndexSearcher;
-import org.apache.solr.util.NamedList;
-import org.apache.solr.util.XML;
 
 public class LocalResponseWritter implements QueryResponseWriter {
 

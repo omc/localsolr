@@ -9,22 +9,25 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.solr.core.SolrCore;
-import org.apache.solr.core.SolrException;
+import org.apache.solr.common.SolrException;
 import org.apache.solr.core.SolrInfoMBean;
 import org.apache.solr.request.SimpleFacets;
-import org.apache.solr.request.SolrParams;
+import org.apache.solr.common.SolrException.ErrorCode;
+import org.apache.solr.common.params.FacetParams;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.request.SolrQueryResponse;
 import org.apache.solr.request.SolrRequestHandler;
-import org.apache.solr.request.StandardRequestHandler;
+import org.apache.solr.handler.StandardRequestHandler;
 import org.apache.solr.search.DocListAndSet;
 import org.apache.solr.search.DocSet;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.SolrIndexSearcher;
+import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.util.HighlightingUtils;
-import org.apache.solr.util.NamedList;
+import org.apache.solr.common.util.NamedList;
 import org.apache.solr.util.SolrPluginUtils;
-import org.apache.solr.util.StrUtils;
+import org.apache.solr.common.util.StrUtils;
 
 import com.pjaol.lucene.search.SerialChainFilter;
 import com.pjaol.search.geo.utils.DistanceFilter;
@@ -70,9 +73,9 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	    try {
 	      U.setDefaults(req,defaults,appends,invariants);
 	      SolrParams p = req.getParams();
-	      String sreq = p.get(SolrParams.Q);
+	      String sreq = p.get(CommonParams.Q);
 
-	      String defaultField = p.get(SolrParams.DF);
+	      String defaultField = p.get(CommonParams.DF);
 
 	      String lat = p.get("lat");
 	      String lng = p.get("long");
@@ -82,13 +85,13 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      
 	      
 	      // find fieldnames to return (fieldlist)
-	      String fl = p.get(SolrParams.FL);
+	      String fl = p.get(CommonParams.FL);
 	      int flags = 0; 
 	      if (fl != null) {
 	        flags |= U.setReturnFields(fl, rsp);
 	      }
 
-	      if (sreq==null) throw new SolrException(400,"Missing queryString");
+	      if (sreq==null) throw new SolrException(ErrorCode.BAD_REQUEST,"Missing queryString");
 	      List<String> commands = StrUtils.splitSmart(sreq,';');
 
 	      String qs = commands.size() >= 1 ? commands.get(0) : "";
@@ -134,19 +137,19 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      
 	      
 	      
-	      if (p.getBool(SolrParams.FACET,false)) {
+	      if (p.getBool(FacetParams.FACET,false)) {
 	    	System.out.println("calling here"+ + f.size());
 	        results = s.getDocListAndSet(query, f, sort,
-	                                     p.getInt(SolrParams.START,0), p.getInt(SolrParams.ROWS,10),
+	                                     p.getInt(CommonParams.START,0), p.getInt(CommonParams.ROWS,10),
 	                                     flags);
 	        facetInfo = getFacetInfo(req, rsp, results.docSet);
 	      } else {
 	    	
-	    	System.out.println("Somehow here?" + f.size() +" -- "+ query.toString());
+	    	
 //	        results.docList = s.getDocList(query, filters, sort,
 //	                                       p.getInt(SolrParams.START,0), p.getInt(SolrParams.ROWS,10),
 //	                                       flags);
-	    	results.docList = s.getDocList(query, f, sort, p.getInt(SolrParams.START,0), p.getInt(SolrParams.ROWS,10));
+	    	results.docList = s.getDocList(query, f, sort, p.getInt(CommonParams.START,0), p.getInt(CommonParams.ROWS,10));
 	    	
 	      }
 
@@ -165,7 +168,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	        NamedList dbg = U.doStandardDebug(req, qs, query, results.docList);
 	        if (null != dbg) {
 	          if (null != filters) {
-	            dbg.add("filter_queries",req.getParams().getParams(SolrParams.FQ));
+	            dbg.add("filter_queries",req.getParams().getParams(CommonParams.FQ));
 	            List<String> fqs = new ArrayList<String>(filters.size());
 	            for (Query fq : filters) {
 	              fqs.add(QueryParsing.toString(fq, req.getSchema()));
@@ -235,7 +238,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	  }
 
 	  public String getSourceId() {
-	    return "$Id: LocalRequestHandler.java,v 1.1 2007-06-15 17:50:53 pjaol Exp $";
+	    return "$Id: LocalRequestHandler.java,v 1.2 2007-09-18 03:47:11 pjaol Exp $";
 	  }
 
 	  public String getSource() {
@@ -252,4 +255,6 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	    lst.add("errors", numErrors);
 	    return lst;
 	  }
+
+	
 }
