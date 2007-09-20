@@ -295,7 +295,6 @@ public class LocalResponseWritter implements QueryResponseWriter {
 	
 	public String formatDistance (Double d){
 		DecimalFormat df1 = new DecimalFormat("####.000000");
-		System.out.println(d);
 		return df1.format(d);
 	}
 	
@@ -316,7 +315,7 @@ public class LocalResponseWritter implements QueryResponseWriter {
 	    // using global tlst here, so we shouldn't call any other
 	    // function that uses it until we are done.
 	    tlst.clear();
-	    System.out.println("Fields "+ doc.getFields().size());
+	    //System.out.println("Fields "+ doc.getFields().size());
 	    for (Object obj : doc.getFields()) {
 	      Fieldable ff = (Fieldable)obj;
 	      // skip this field if it is not a field to be returned.
@@ -330,7 +329,7 @@ public class LocalResponseWritter implements QueryResponseWriter {
 	    Collections.sort(tlst, fieldnameComparator);
 	    
 	    int sz = tlst.size();
-	    System.out.println("Size ==" + sz);
+	   
 	    int fidx1 = 0, fidx2 = 0;
 	    while (fidx1 < sz) {
 	      Fieldable f1 = (Fieldable)tlst.get(fidx1);

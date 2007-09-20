@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.lucene.search.CachingWrapperFilter;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
@@ -117,22 +118,25 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      DistanceFilter filter = null;
 	      
 	      if (lat != null && lng != null && radius != null) {
-	    	  System.out.println("Here");
+	    	  
 	    	  double dlat = new Double(lat).doubleValue();
 	    	  double dlng = new Double(lng).doubleValue();
 	    	  double dradius = new Double(radius).doubleValue();
 	    	  
 	    	  DistanceQuery dq = new DistanceQuery(dlat,dlng,dradius);
-	    	  filter = new DistanceFilter(dlat, dlng, dradius);
+	    	  filter = new DistanceFilter(dlat, dlng, dradius, dq.latFilter, dq.lngFilter);
 	    	  
 	    	  SerialChainFilter scf = new SerialChainFilter(new Filter[] {dq.latFilter, dq.lngFilter, filter} ,
 	  				new int[] {SerialChainFilter.AND,
 	  						   SerialChainFilter.AND,
 	  						   SerialChainFilter.SERIALAND});
-	    	  f = s.convertFilter(scf);
+	    	  CachingWrapperFilter cwf = new CachingWrapperFilter(scf);
+	    	  
+	    	  f = s.convertFilter(cwf);
+	    	  
 	    	  DistanceSortSource dsort = new DistanceSortSource(filter);
 	    	  sort = new Sort(new SortField("foo", dsort));
-
+	    	
 	      }
 	      
 	      
@@ -238,7 +242,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	  }
 
 	  public String getSourceId() {
-	    return "$Id: LocalRequestHandler.java,v 1.2 2007-09-18 03:47:11 pjaol Exp $";
+	    return "$Id: LocalRequestHandler.java,v 1.3 2007-09-20 19:36:13 pjaol Exp $";
 	  }
 
 	  public String getSource() {
