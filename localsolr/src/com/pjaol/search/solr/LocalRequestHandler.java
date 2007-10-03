@@ -4,31 +4,30 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.search.CachingWrapperFilter;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.apache.solr.core.SolrCore;
 import org.apache.solr.common.SolrException;
-import org.apache.solr.core.SolrInfoMBean;
-import org.apache.solr.request.SimpleFacets;
 import org.apache.solr.common.SolrException.ErrorCode;
+import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.FacetParams;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.StrUtils;
+import org.apache.solr.core.SolrCore;
+import org.apache.solr.core.SolrInfoMBean;
+import org.apache.solr.handler.StandardRequestHandler;
+import org.apache.solr.request.SimpleFacets;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.request.SolrQueryResponse;
 import org.apache.solr.request.SolrRequestHandler;
-import org.apache.solr.handler.StandardRequestHandler;
 import org.apache.solr.search.DocListAndSet;
 import org.apache.solr.search.DocSet;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.SolrIndexSearcher;
-import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.util.HighlightingUtils;
-import org.apache.solr.common.util.NamedList;
 import org.apache.solr.util.SolrPluginUtils;
-import org.apache.solr.common.util.StrUtils;
 
 import com.pjaol.lucene.search.SerialChainFilter;
 import com.pjaol.search.geo.utils.DistanceFilter;
@@ -130,9 +129,9 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	  				new int[] {SerialChainFilter.AND,
 	  						   SerialChainFilter.AND,
 	  						   SerialChainFilter.SERIALAND});
-	    	  CachingWrapperFilter cwf = new CachingWrapperFilter(scf);
+	    	  //CachingWrapperFilter cwf = new CachingWrapperFilter(scf);
 	    	  
-	    	  f = s.convertFilter(cwf);
+	    	  f = s.convertFilter(scf);
 	    	  
 	    	  DistanceSortSource dsort = new DistanceSortSource(filter);
 	    	  sort = new Sort(new SortField("foo", dsort));
@@ -158,6 +157,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      }
 
 	      if (filter != null ){
+	    	  sort=null;
 	    	  rsp.add("distances", filter.getDistances());
 	      }
 	      
@@ -242,7 +242,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	  }
 
 	  public String getSourceId() {
-	    return "$Id: LocalRequestHandler.java,v 1.3 2007-09-20 19:36:13 pjaol Exp $";
+	    return "$Id: LocalRequestHandler.java,v 1.4 2007-10-03 15:24:40 pjaol Exp $";
 	  }
 
 	  public String getSource() {

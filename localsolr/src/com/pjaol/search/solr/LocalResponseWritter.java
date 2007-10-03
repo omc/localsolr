@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -32,7 +33,7 @@ public class LocalResponseWritter implements QueryResponseWriter {
 
 	private Writer writer;
 
-	private HashMap distances;
+	private Map distances;
 	
 	private SolrIndexSearcher searcher;
 
@@ -154,15 +155,17 @@ public class LocalResponseWritter implements QueryResponseWriter {
 
 		
 		for (int i = start; i < sz; i++) {
-			if (lst.getName(i).equals("distances") && lst.getVal(i) instanceof HashMap){
-				xw.setDistances((HashMap)lst.getVal(i));
+			if (lst.getName(i).equals("distances") && lst.getVal(i) instanceof Map){
+				xw.setDistances((Map)lst.getVal(i));
 			}else {
 				xw.writeVal(lst.getName(i), lst.getVal(i));
 			}
 		}
-
+		lst = null;
+		xw.cleanUp();
 		writer.write("\n</response>\n");
-
+		rsp.setAllValues(null);
+		
 	}
 
 	private void writeVal(String name, Object val) throws IOException {
@@ -285,13 +288,17 @@ public class LocalResponseWritter implements QueryResponseWriter {
 		}
 
 		writer.write("</result>");
+		cleanUp();
 	}
 
 	
-	public void setDistances (HashMap distances){
+	public void setDistances (Map distances){
 		this.distances = distances;
 	}
 	
+	public void cleanUp () {
+		distances = null;
+	}
 	
 	public String formatDistance (Double d){
 		DecimalFormat df1 = new DecimalFormat("####.000000");
