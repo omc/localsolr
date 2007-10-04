@@ -115,6 +115,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      SolrIndexSearcher s = req.getSearcher();
 	      DocSet f = null;
 	      DistanceFilter filter = null;
+	      DistanceSortSource dsort = null;
 	      
 	      if (lat != null && lng != null && radius != null) {
 	    	  
@@ -133,7 +134,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	    	  
 	    	  f = s.convertFilter(scf);
 	    	  
-	    	  DistanceSortSource dsort = new DistanceSortSource(filter);
+	    	  dsort = new DistanceSortSource(filter);
 	    	  sort = new Sort(new SortField("foo", dsort));
 	    	
 	      }
@@ -157,7 +158,8 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      }
 
 	      if (filter != null ){
-	    	  sort=null;
+	    	  dsort.cleanUp();
+	    	  sort = null;
 	    	  rsp.add("distances", filter.getDistances());
 	      }
 	      
@@ -242,7 +244,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	  }
 
 	  public String getSourceId() {
-	    return "$Id: LocalRequestHandler.java,v 1.4 2007-10-03 15:24:40 pjaol Exp $";
+	    return "$Id: LocalRequestHandler.java,v 1.5 2007-10-04 04:56:25 pjaol Exp $";
 	  }
 
 	  public String getSource() {
