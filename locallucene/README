@@ -16,9 +16,27 @@ http://www.nsshutdown.com/projects/lucene/whitepaper/locallucene.htm
 Compiling from source
 ====================
 
+The Most up to date version of local lucene is available from 
+http://www.nsshutdown.com/viewcvs/viewcvs.cgi/locallucene/
+
 Requirements
 JSDK 1.5+
 Ant 1.5+
+
+The following files are required.
+
+OpenGIS 2 http://geotools.codehaus.org/  (LGPL)
+	gt2-referencing-2.3.1
+	geoapi-nogenerics-2.1
+
+Lucene 2 (Apache 2.0)
+	lucene-core-2.2
+
+Traverse Technologies Fulcurm com.traversetechnologies.fulcrum.math.LonLatTrig.java (LGPL)
+	http://www.traversetechnologies.com/
+
+All are also available from http://www.nsshutdown.com/viewcvs/viewcvs.cgi/locallucene/
+
 
 The default compile run's junit to do so run
 ant -lib lib/junit.jar
@@ -89,12 +107,17 @@ e.g
 
 Searching can now be performed by using Custom Serial Filter, DistanceFilter and DistanceQuery
 
+// reston va
+double lat = 38.967446; 
+double lng= -77.360499;
+double miles = 6.0;
+
 //create a distance query (used for boundary box search)
 DistanceQuery dq = new DistanceQuery(lat, lng, miles);
 
 //create a distance filter (used for radial search)
-Filter filter = new DistanceFilter(lat, lng, miles);
-
+Filter filter = new DistanceFilter(lat, lng, miles, dq.latFilter, dq.lngFilter);
+		
 //Add these to a SerialChainFilter
 SerialChainFilter scf = new SerialChainFilter(new Filter[] {dq.latFilter, dq.lngFilter, filter} ,
 				new int[] {SerialChainFilter.AND,
@@ -104,6 +127,7 @@ SerialChainFilter scf = new SerialChainFilter(new Filter[] {dq.latFilter, dq.lng
 //Create a distance sort using the radial filter (distance calculations are done
 // in the radial filter, so use the output of that to drive the sort)
 DistanceSortSource dsort = new DistanceSortSource(filter);
+Sort sort = new Sort(new SortField("foo", dsort));
 
 //perform a reqular search
 Hits hits = searcher.search(somequery,scf, sort);
