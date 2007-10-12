@@ -1,6 +1,6 @@
 Local Lucene
 ====================
-Provide geographical based searching to lucene in an efficent mannor
+Provide geographical based searching to lucene in an efficient manor
 Contents
 * Compiling from Source
 * Using local lucene
@@ -16,7 +16,7 @@ http://www.nsshutdown.com/projects/lucene/whitepaper/locallucene.htm
 Compiling from source
 ====================
 
-The Most up to date version of local lucene is available from 
+The Most up to date version of local lucene and libaries is available from 
 http://www.nsshutdown.com/viewcvs/viewcvs.cgi/locallucene/
 
 Requirements
