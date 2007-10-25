@@ -21,6 +21,8 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Filter;
 
+import com.pjaol.search.geo.utils.BoundaryBoxFilter;
+
 /**
  * 
  * Provide a serial chain filter, passing the bitset in with the
@@ -127,4 +129,57 @@ public class SerialChainFilter extends Filter {
 		return bits;
 	}
 
+    /**
+	 * @return the chain
+	 */
+	Filter[] getChain() {
+		return chain;
+	}
+
+	/**
+	 * @return the actionType
+	 */
+	int[] getActionType() {
+		return actionType;
+	}
+
+	/** 
+     * Returns true if <code>o</code> is equal to this.
+     * 
+     * @see org.apache.lucene.search.RangeFilter#equals
+     */
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SerialChainFilter)) return false;
+        SerialChainFilter other = (SerialChainFilter) o;
+
+        if (this.chain.length != other.getChain().length ||
+        	this.actionType.length != other.getActionType().length)
+        	return false;
+        
+        for (int i = 0; i < this.chain.length; i++) {
+        	if (this.actionType[i] != other.getActionType()[i]  ||
+        		(!this.chain[i].equals(other.getChain()[i])))
+        		return false;
+        }
+        return true;
+    }
+    
+    /** 
+     * Returns a hash code value for this object.
+     * 
+     * @see org.apache.lucene.search.RangeFilter#hashCode
+     */
+    public int hashCode() {
+      if (chain.length == 0)
+    	  return 0;
+
+      int h = chain[0].hashCode() ^ new Integer(actionType[0]).hashCode(); 
+      for (int i = 1; i < this.chain.length; i++) {
+    	  h ^= chain[i].hashCode();
+    	  h ^= new Integer(actionType[i]).hashCode();
+      }
+
+      return h;
+    }
 }

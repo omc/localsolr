@@ -16,6 +16,9 @@ import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.search.Filter;
 
 /**
+ * An implementation of org.apache.lucene.search.RangeFilter that
+ * caches values extracted from the index.
+ * 
  * @author pjaol
  *
  */
@@ -31,6 +34,8 @@ public class BoundaryBoxFilter extends Filter {
     private boolean includeLower;
     private boolean includeUpper;
 	
+    /* cache of values extracted from the index */
+    /* TODO: add generics */
     private Map coords;
     
     /**
@@ -150,6 +155,10 @@ public class BoundaryBoxFilter extends Filter {
         buffer.append(fieldName);
         buffer.append(":");
         buffer.append(includeLower ? "[" : "{");
+        /* TODO: reformat terms to be human-readable.  Need to
+         * find a way to do this that allows different storage formats, if possible,
+         * to allow use of Solr-only sortable storage types
+         */
         if (null != lowerTerm) {
             buffer.append(lowerTerm);
         }
@@ -160,5 +169,44 @@ public class BoundaryBoxFilter extends Filter {
         buffer.append(includeUpper ? "]" : "}");
         return buffer.toString();
     }
-    
+
+
+	public String getFieldName() {
+		return fieldName;
+	}
+
+	
+    /** 
+     * Returns true if <code>o</code> is equal to this.
+     * 
+     * @see org.apache.lucene.search.RangeFilter#equals
+     */
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BoundaryBoxFilter)) return false;
+        BoundaryBoxFilter other = (BoundaryBoxFilter) o;
+
+        if (!this.fieldName.equals(other.fieldName)
+            || this.includeLower != other.includeLower
+            || this.includeUpper != other.includeUpper
+           ) { return false; }
+        if (this.lowerTerm != null ? !this.lowerTerm.equals(other.lowerTerm) : other.lowerTerm != null) return false;
+        if (this.upperTerm != null ? !this.upperTerm.equals(other.upperTerm) : other.upperTerm != null) return false;
+        return true;
+    }
+
+    /** 
+     * Returns a hash code value for this object.
+     * 
+     * @see org.apache.lucene.search.RangeFilter#hashCode
+     */
+    public int hashCode() {
+      int h = fieldName.hashCode();
+      h ^= lowerTerm != null ? lowerTerm.hashCode() : 0xB6ECE882;
+      h = (h << 1) | (h >>> 31);  // rotate to distinguish lower from upper
+      h ^= (upperTerm != null ? (upperTerm.hashCode()) : 0x91BEC2C2);
+      h ^= (includeLower ? 0xD484B933 : 0)
+         ^ (includeUpper ? 0x6AE423AC : 0);
+      return h;
+    }
 }
