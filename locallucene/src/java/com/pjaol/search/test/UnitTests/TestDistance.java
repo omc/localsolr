@@ -32,6 +32,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.solr.util.NumberUtils;
 
 import com.pjaol.lucene.search.SerialChainFilter;
 import com.pjaol.search.geo.utils.DistanceFilter;
@@ -69,8 +70,8 @@ public class TestDistance extends TestCase{
 		doc.add(new Field("name", name,Field.Store.YES, Field.Index.TOKENIZED));
 		
 		// convert the lat / long to lucene fields
-		doc.add(new Field("lat", DistanceUtils.latToString(lat),Field.Store.YES, Field.Index.TOKENIZED));
-		doc.add(new Field("lng", DistanceUtils.lngToString(lng),Field.Store.YES, Field.Index.TOKENIZED));
+		doc.add(new Field("lat", NumberUtils.double2sortableStr(lat),Field.Store.YES, Field.Index.UN_TOKENIZED));
+		doc.add(new Field("lng", NumberUtils.double2sortableStr(lng),Field.Store.YES, Field.Index.UN_TOKENIZED));
 		
 		// add a default meta field to make searching all documents easy 
 		doc.add(new Field("metafile", "doc",Field.Store.YES, Field.Index.TOKENIZED));
@@ -161,8 +162,8 @@ public class TestDistance extends TestCase{
 			Document d = hits.doc(i);
 			
 			String name = d.get("name");
-			double rsLat = DistanceUtils.stringToLat(d.get("lat"));
-			double rsLng = DistanceUtils.stringToLng(d.get("lng")); 
+			double rsLat = NumberUtils.SortableStr2double(d.get("lat"));
+			double rsLng = NumberUtils.SortableStr2double(d.get("lng")); 
 			Double geo_distance = (Double)  distances.get(hits.id(i));
 			
 			double distance = DistanceUtils.getDistanceMi(lat, lng, rsLat, rsLng);

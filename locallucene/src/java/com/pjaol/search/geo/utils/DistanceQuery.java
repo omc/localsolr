@@ -21,6 +21,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.RangeFilter;
+import org.apache.solr.util.NumberUtils;
 
 import com.pjaol.lucene.search.SerialChainFilter;
 
@@ -55,8 +56,8 @@ public class DistanceQuery{
 		double y2 = box.getMaxX();
 		
 	
-		latFilter = new BoundaryBoxFilter("lat", DistanceUtils.latToString(x1), DistanceUtils.latToString(x2), true, true);
-		lngFilter = new BoundaryBoxFilter("lng", DistanceUtils.lngToString(y1), DistanceUtils.lngToString(y2), true, true);
+		latFilter = new BoundaryBoxFilter("lat", NumberUtils.double2sortableStr(x1), NumberUtils.double2sortableStr(x2), true, true);
+		lngFilter = new BoundaryBoxFilter("lng", NumberUtils.double2sortableStr(y1), NumberUtils.double2sortableStr(y2), true, true);
 		
 		query.add(new ConstantScoreQuery(latFilter),
 				BooleanClause.Occur.MUST);

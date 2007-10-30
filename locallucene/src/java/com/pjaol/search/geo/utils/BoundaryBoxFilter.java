@@ -14,6 +14,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermDocs;
 import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.search.Filter;
+import org.apache.solr.util.NumberUtils;
 
 /**
  * An implementation of org.apache.lucene.search.RangeFilter that
@@ -155,16 +156,12 @@ public class BoundaryBoxFilter extends Filter {
         buffer.append(fieldName);
         buffer.append(":");
         buffer.append(includeLower ? "[" : "{");
-        /* TODO: reformat terms to be human-readable.  Need to
-         * find a way to do this that allows different storage formats, if possible,
-         * to allow use of Solr-only sortable storage types
-         */
         if (null != lowerTerm) {
-            buffer.append(lowerTerm);
+            buffer.append(NumberUtils.SortableStr2double(lowerTerm));
         }
         buffer.append("-");
         if (null != upperTerm) {
-            buffer.append(upperTerm);
+            buffer.append(NumberUtils.SortableStr2double(upperTerm));
         }
         buffer.append(includeUpper ? "]" : "}");
         return buffer.toString();

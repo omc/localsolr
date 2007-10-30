@@ -25,6 +25,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 
+import org.apache.solr.util.NumberUtils;
+
 import com.pjaol.lucene.search.ISerialChainFilter;
 import com.pjaol.search.geo.utils.DistanceHandler.precision;
 
@@ -93,8 +95,8 @@ public class DistanceFilter extends ISerialChainFilter {
 			
 			Document doc = reader.document(i);
 			
-			double x = DistanceUtils.stringToLat(doc.get("lat"));
-			double y = DistanceUtils.stringToLng(doc.get("lng"));
+			double x = NumberUtils.SortableStr2double(doc.get("lat"));
+			double y = NumberUtils.SortableStr2double(doc.get("lng"));
 			
 			// round off lat / longs if necessary
 			x = DistanceHandler.getPrecision(x, precise);
@@ -157,8 +159,8 @@ public class DistanceFilter extends ISerialChainFilter {
 			String sx = (String)latFilter.getCoord(i);
 			String sy = (String)lngFilter.getCoord(i);
 			
-			x = DistanceUtils.stringToLat(sx);
-			y = DistanceUtils.stringToLng(sy);
+			x = NumberUtils.SortableStr2double(sx);
+			y = NumberUtils.SortableStr2double(sy);
 				
 			
 			
