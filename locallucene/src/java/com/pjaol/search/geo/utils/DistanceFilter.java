@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 
 import org.apache.solr.util.NumberUtils;
@@ -41,14 +40,14 @@ public class DistanceFilter extends ISerialChainFilter {
 	private double distance;
 	private double lat;
 	private double lng;
-	private precision precise;
-	
+	private String latField;
+	private String lngField;
 	
 	private BoundaryBoxFilter latFilter;
 	private BoundaryBoxFilter lngFilter;
 	
-	// no type safety for generic key
-	private Map distances;
+	private Map<Integer,Double> distances = null;
+	private precision precise = null;
 	
 	/**
 	 * Provide a distance filter based from a center point with a radius
@@ -56,12 +55,17 @@ public class DistanceFilter extends ISerialChainFilter {
 	 * @param lat
 	 * @param lng
 	 * @param miles
+	 * @param latField
+	 * @param lngField
 	 */
-	public DistanceFilter(double lat, double lng, double miles){
+	public DistanceFilter(double lat, double lng, double miles, String latField, String lngField){
 		distance = miles;
 		this.lat = lat;
 		this.lng = lng;
-		
+		this.latField = latField;
+		this.lngField = lngField;
+		this.lngFilter = null;
+		this.latFilter = null;
 	}
 	
 	public DistanceFilter(double lat, double lng, double miles, BoundaryBoxFilter bblatfilter, BoundaryBoxFilter bblngfilter){
@@ -71,10 +75,12 @@ public class DistanceFilter extends ISerialChainFilter {
 		this.lng = lng;
 		this.latFilter = bblatfilter;
 		this.lngFilter = bblngfilter;
+		this.latField = this.latFilter.getFieldName();
+		this.lngField = this.lngFilter.getFieldName();
 	}
 	
 	
-	public Map getDistances(){
+	public Map<Integer,Double> getDistances(){
 		return distances;
 	}
 	
@@ -84,26 +90,32 @@ public class DistanceFilter extends ISerialChainFilter {
 	
 	@Override
 	public BitSet bits(IndexReader reader) throws IOException {
-		
+
+		/* Create a BitSet to store the result */
 		int maxdocs = reader.numDocs();
 		BitSet bits = new BitSet(maxdocs);
 		
 		setPrecision(maxdocs);
-		WeakHashMap cdistance = new WeakHashMap(maxdocs);
-		distances = new HashMap(maxdocs);
+		/* create an intermediate cache to avoid recomputing
+	       distances for the same point 
+	       TODO: Why is this a WeakHashMap? */
+		WeakHashMap<String,Double> cdistance = new WeakHashMap<String,Double>(maxdocs);
+		
+		/* store calculated distances for reuse by other components */
+		distances = new HashMap<Integer,Double>(maxdocs);
 		for (int i = 0 ; i < maxdocs; i++) {
 			
 			Document doc = reader.document(i);
 			
-			double x = NumberUtils.SortableStr2double(doc.get("lat"));
-			double y = NumberUtils.SortableStr2double(doc.get("lng"));
+			double x = NumberUtils.SortableStr2double(doc.get(latField));
+			double y = NumberUtils.SortableStr2double(doc.get(lngField));
 			
 			// round off lat / longs if necessary
 			x = DistanceHandler.getPrecision(x, precise);
 			y = DistanceHandler.getPrecision(y, precise);
 			
 			String ck = new Double(x).toString()+","+new Double(y).toString();
-			Double cachedDistance = (Double)cdistance.get(ck);
+			Double cachedDistance = cdistance.get(ck);
 			
 			
 			double d;
@@ -128,14 +140,8 @@ public class DistanceFilter extends ISerialChainFilter {
 	
 	@Override
 	public BitSet bits(IndexReader reader, BitSet bits) throws Exception {
-		
-		int size = bits.cardinality();
-		BitSet result = new BitSet(size);
-		int i = 0;
-		setPrecision(size);
-		HashMap cdistance = new HashMap(size);
-		
-		
+
+		/* ensure this method is only run downstream from a boundary box filter */
 		if (lngFilter == null || latFilter == null) {
 			// should not be here!
 			// DistanceFilter was initialized without a boundary box pass
@@ -143,14 +149,24 @@ public class DistanceFilter extends ISerialChainFilter {
 		
 		}
 			
-		distances = new HashMap(size);
+		/* Create a BitSet to store the result */
+		int size = bits.cardinality();
+		BitSet result = new BitSet(size);
+		
+		setPrecision(size);
+
+		/* create an intermediate cache to avoid recomputing
+	       distances for the same point  */
+		HashMap<String,Double> cdistance = new HashMap<String,Double>(size);
+		
+
+		/* store calculated distances for reuse by other components */
+		distances = new HashMap<Integer,Double>(size);
 		
 		long start = System.currentTimeMillis();
+	  	/* loop over all set bits (hits from the boundary box filters) */
+	  	int i = bits.nextSetBit(0);
 		while (i >= 0){
-			i = bits.nextSetBit(i);
-			if (i < 0)
-				return result;
-			
 			double x,y;
 			
 			// if we have a completed
@@ -161,15 +177,13 @@ public class DistanceFilter extends ISerialChainFilter {
 			
 			x = NumberUtils.SortableStr2double(sx);
 			y = NumberUtils.SortableStr2double(sy);
-				
-			
 			
 			// round off lat / longs if necessary
 			x = DistanceHandler.getPrecision(x, precise);
 			y = DistanceHandler.getPrecision(y, precise);
-			
-			String ck = sx+","+sy;
-			Double cachedDistance = (Double)cdistance.get(ck);
+
+			String ck = new Double(x).toString()+","+new Double(y).toString();
+			Double cachedDistance = cdistance.get(ck);
 			double d;
 			
 			if(cachedDistance != null){
@@ -193,6 +207,7 @@ public class DistanceFilter extends ISerialChainFilter {
 				" results : "+ distances.size() + 
 				" cached : "+ cdistance.size());
 	
+		/* TODO: Cleanup on latFilter and lngFilter should be called outside of this method */
 		latFilter.cleanUp();
 		lngFilter.cleanUp();
 		cdistance = null;
@@ -200,6 +215,32 @@ public class DistanceFilter extends ISerialChainFilter {
 		return result;
 	}
 
+	  /** Returns true if <code>o</code> is equal to this. */
+	  public boolean equals(Object o) {
+	  	
+	      if (this == o) return true;
+	      if (!(o instanceof DistanceFilter)) return false;
+	      DistanceFilter other = (DistanceFilter) o;
+
+	      if (this.distance != other.distance ||
+	      		this.lat != other.lat ||
+	      		this.lng != other.lng ||
+	      		!this.latField.equals(other.latField) ||
+	      		!this.lngField.equals(other.lngField)) {
+	      	return false;
+	      }
+	      return true;
+	  }
+
+	  /** Returns a hash code value for this object.*/
+	  public int hashCode() {
+	    int h = new Double(distance).hashCode();
+	    h ^= new Double(lat).hashCode();
+	    h ^= new Double(lng).hashCode();
+	    h ^= latField.hashCode();
+	    h ^= lngField.hashCode();
+	    return h;
+	  }
 	
 	private void setPrecision(int maxDocs){
 		precise = precision.EXACT;

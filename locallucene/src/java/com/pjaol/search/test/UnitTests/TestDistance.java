@@ -53,6 +53,8 @@ public class TestDistance extends TestCase{
 	// reston va
 	private double lat = 38.969398; 
 	private double lng= -77.386398;
+	private String latField = "lat";
+	private String lngField = "lng";
 	
 	
 	protected void setUp() throws IOException {
@@ -70,8 +72,8 @@ public class TestDistance extends TestCase{
 		doc.add(new Field("name", name,Field.Store.YES, Field.Index.TOKENIZED));
 		
 		// convert the lat / long to lucene fields
-		doc.add(new Field("lat", NumberUtils.double2sortableStr(lat),Field.Store.YES, Field.Index.UN_TOKENIZED));
-		doc.add(new Field("lng", NumberUtils.double2sortableStr(lng),Field.Store.YES, Field.Index.UN_TOKENIZED));
+		doc.add(new Field(latField, NumberUtils.double2sortableStr(lat),Field.Store.YES, Field.Index.UN_TOKENIZED));
+		doc.add(new Field(lngField, NumberUtils.double2sortableStr(lng),Field.Store.YES, Field.Index.UN_TOKENIZED));
 		
 		// add a default meta field to make searching all documents easy 
 		doc.add(new Field("metafile", "doc",Field.Store.YES, Field.Index.TOKENIZED));
@@ -106,44 +108,30 @@ public class TestDistance extends TestCase{
 		
 		double miles = 6.0;
 
-		// create range query
-		// first to run
-		DistanceQuery dq = new DistanceQuery(lat, lng, miles);
+		// create a distance query
+		DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField);
 		 
 		System.out.println(dq.latFilter.toString() +" "+ dq.lngFilter);
-		// radius filter
-		Filter filter = new DistanceFilter(lat, lng, miles, dq.latFilter, dq.lngFilter);
 		
 		//create a term query to search against all documents
 		Query tq = new TermQuery(new Term("metafile", "doc"));
 		
 		
-		// Create a Serial Chain Filter
-		// perform filters in order where SERIALANDS can be performed with
-		// Filters implenting ISerialChainFilter
-		
-		SerialChainFilter scf = new SerialChainFilter(new Filter[] {dq.latFilter, dq.lngFilter, filter} ,
-				new int[] {SerialChainFilter.AND,
-						   SerialChainFilter.AND,
-						   SerialChainFilter.SERIALAND});
-
-		
 		// Create a distance sort
 		// As the radius filter has performed the distance calculations
 		// already, pass in the filter to reuse the results.
 		// 
-		DistanceSortSource dsort = new DistanceSortSource(filter);
+		DistanceSortSource dsort = new DistanceSortSource(dq.distanceFilter);
 		Sort sort = new Sort(new SortField("foo", dsort));
-		
 		
 		// Perform the search, using the term query, the serial chain filter, and the
 		// distance sort
-		Hits hits = searcher.search(tq,scf, sort);
+		Hits hits = searcher.search(tq, dq.getFilter(), sort);
 
 		int results = hits.length();
 		
 		// Get a list of distances 
-		Map distances = ((DistanceFilter)filter).getDistances();
+		Map<Integer,Double> distances = dq.distanceFilter.getDistances();
 		
 		// distances calculated from filter first pass must be less than total
 		// docs, from the above test of 20 items, 12 will come from the boundary box
@@ -162,9 +150,9 @@ public class TestDistance extends TestCase{
 			Document d = hits.doc(i);
 			
 			String name = d.get("name");
-			double rsLat = NumberUtils.SortableStr2double(d.get("lat"));
-			double rsLng = NumberUtils.SortableStr2double(d.get("lng")); 
-			Double geo_distance = (Double)  distances.get(hits.id(i));
+			double rsLat = NumberUtils.SortableStr2double(d.get(latField));
+			double rsLng = NumberUtils.SortableStr2double(d.get(lngField)); 
+			Double geo_distance = distances.get(hits.id(i));
 			
 			double distance = DistanceUtils.getDistanceMi(lat, lng, rsLat, rsLng);
 			double llm = DistanceUtils.getLLMDistance(lat, lng, rsLat, rsLng);
@@ -179,5 +167,22 @@ public class TestDistance extends TestCase{
 		double LLM = DistanceUtils.getLLMDistance(lat, lng,39.012200001, -77.3942);
 		System.out.println(LLM);
 		System.out.println("-->"+DistanceUtils.getDistanceMi(lat, lng, 39.0122, -77.3942));
+	}
+	
+
+	
+	public void testDistanceQueryCacheable() throws IOException {
+
+		// create two of the same distance queries
+		double miles = 6.0;
+		DistanceQuery dq1 = new DistanceQuery(lat, lng, miles, latField, lngField);
+		DistanceQuery dq2 = new DistanceQuery(lat, lng, miles, latField, lngField);
+
+		/* ensure that they hash to the same code, which will cause a cache hit in solr */
+		assertEquals(dq1.getQuery().hashCode(), dq2.getQuery().hashCode());
+		
+		/* ensure that changing the radius makes a different hash code, creating a cache miss in solr */
+		DistanceQuery widerQuery = new DistanceQuery(lat, lng, miles + 5.0, latField, lngField);
+		assertTrue(dq1.getQuery().hashCode() != widerQuery.getQuery().hashCode());
 	}
 }

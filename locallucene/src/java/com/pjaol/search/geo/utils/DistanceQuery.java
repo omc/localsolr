@@ -16,11 +16,9 @@ package com.pjaol.search.geo.utils;
 
 import java.awt.geom.Rectangle2D;
 
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.RangeFilter;
+import org.apache.lucene.search.Query;
 import org.apache.solr.util.NumberUtils;
 
 import com.pjaol.lucene.search.SerialChainFilter;
@@ -31,47 +29,68 @@ public class DistanceQuery{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private BooleanQuery query = new BooleanQuery();
+	
 	public BoundaryBoxFilter latFilter;
 	public BoundaryBoxFilter lngFilter;
+	public DistanceFilter distanceFilter;
+	
+	private double lat;
+	private double lng;
+	private double miles;
+	private String latField;
+	private String lngField;
 	
 	/**
-	 * Create a distance Query or 2 filters based upon
-	 * a boundary box range filter.
-	 * Recommend using Filters latFilter lngFilter
-	 * for the moment in conjunction with
-	 * SerialChainFilter
+	 * Create a distance query using
+	 * a boundary box wrapper around a more precise
+	 * DistanceFilter.
 	 * 
 	 * @see SerialChainFilter
 	 * @param lat
 	 * @param lng
 	 * @param miles
 	 */
-	public DistanceQuery (double lat, double lng, double miles){
-		
-		Rectangle2D box = DistanceUtils.getBoundary(lat, lng,miles);
-		double x1 = box.getY(); //
-		double y1 = box.getX(); //
-		double x2 = box.getMaxY();
-		double y2 = box.getMaxX();
-		
-	
-		latFilter = new BoundaryBoxFilter("lat", NumberUtils.double2sortableStr(x1), NumberUtils.double2sortableStr(x2), true, true);
-		lngFilter = new BoundaryBoxFilter("lng", NumberUtils.double2sortableStr(y1), NumberUtils.double2sortableStr(y2), true, true);
-		
-		query.add(new ConstantScoreQuery(latFilter),
-				BooleanClause.Occur.MUST);
-		
-		query.add(new ConstantScoreQuery(lngFilter),
-				BooleanClause.Occur.MUST);
-		
+	public DistanceQuery (double lat, double lng, double miles, String latField, String lngField){
+
+	    this.lat = lat;
+	    this.lng = lng;
+	    this.miles = miles;
+	    this.latField = latField;
+	    this.lngField = lngField;
+
+	    /* create boundary box filters */
+		Rectangle2D box = DistanceUtils.getBoundary(lat, lng, miles);
+		latFilter = new BoundaryBoxFilter(latField, NumberUtils.double2sortableStr(box.getY()), NumberUtils.double2sortableStr(box.getMaxY()), 
+		                                  true, true);
+		lngFilter = new BoundaryBoxFilter(lngField, NumberUtils.double2sortableStr(box.getX()), NumberUtils.double2sortableStr(box.getMaxX()), 
+		                                  true, true);
+
+	    /* create precise distance filter */
+		distanceFilter = new DistanceFilter(lat, lng, miles, latFilter, lngFilter);
 	}
-	
-	public BooleanQuery getQuery(){
-		return query;
+
+   /**
+	* Create a distance query using
+	* a boundary box wrapper around a more precise
+	* DistanceFilter.
+	* 
+	* @see SerialChainFilter
+	* @param lat
+	* @param lng
+	* @param miles
+	*/
+	public Filter getFilter() {
+	    return new SerialChainFilter(new Filter[] {latFilter, lngFilter, distanceFilter},
+				                     new int[] {SerialChainFilter.AND,
+						                        SerialChainFilter.AND,
+						                        SerialChainFilter.SERIALAND});
 	}
-	
+	  
+	public Query getQuery() {
+	    return new ConstantScoreQuery(getFilter());
+	}
+	  
 	public String toString() {
-		return query.toString();
+		return "DistanceQuery lat: " + lat + " lng: " + lng + " miles: "+ miles;
 	}
 }
