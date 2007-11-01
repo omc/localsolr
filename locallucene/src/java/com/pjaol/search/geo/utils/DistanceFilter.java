@@ -143,6 +143,7 @@ public class DistanceFilter extends ISerialChainFilter {
 
 		/* ensure this method is only run downstream from a boundary box filter */
 		if (lngFilter == null || latFilter == null) {
+			
 			// should not be here!
 			// DistanceFilter was initialized without a boundary box pass
 			throw new Exception("DistanceFilter not initialized with serial chain correctly");
@@ -245,11 +246,11 @@ public class DistanceFilter extends ISerialChainFilter {
 	private void setPrecision(int maxDocs){
 		precise = precision.EXACT;
 		
-		if (maxDocs > 1000) {
+		if (maxDocs > 1000 && distance > 10) {
 			precise = precision.TWENTYFEET;
 		}
 		
-		if (maxDocs > 10000){
+		if (maxDocs > 10000 && distance > 10){
 			precise = precision.TWOHUNDREDFEET;
 		}
 	}

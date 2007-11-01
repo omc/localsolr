@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="lib/geoapi-nogenerics-2.1-M2.jar"/>
 	<classpathentry kind="lib" path="lib/jsr108-0.01.jar"/>
 	<classpathentry kind="lib" path="lib/apache-solr-1.3-dev.jar"/>
+	<classpathentry kind="lib" path="/localsolr/libs/solr/apache-solr-1.3-dev.jar" sourcepath="/solr"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

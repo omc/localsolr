@@ -96,9 +96,9 @@ e.g
 		doc.add(new Field("name", name,Field.Store.YES, Field.Index.TOKENIZED));
 		
 		// convert the lat / long to lucene fields
-		doc.add(new Field("lat", DistanceUtils.latToString(lat),Field.Store.YES, Field.Index.TOKENIZED));
-		doc.add(new Field("lng", DistanceUtils.lngToString(lng),Field.Store.YES, Field.Index.TOKENIZED));
-		
+		doc.add(new Field(latField, NumberUtils.double2sortableStr(lat),Field.Store.YES, Field.Index.UN_TOKENIZED));
+		doc.add(new Field(lngField, NumberUtils.double2sortableStr(lng),Field.Store.YES, Field.Index.UN_TOKENIZED));
+				
 		// add a default meta field to make searching all documents easy 
 		doc.add(new Field("metafile", "doc",Field.Store.YES, Field.Index.TOKENIZED));
 		writer.addDocument(doc);
@@ -113,7 +113,7 @@ double lng= -77.360499;
 double miles = 6.0;
 
 //create a distance query (used for boundary box search)
-DistanceQuery dq = new DistanceQuery(lat, lng, miles);
+DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField);
 
 //create a distance filter (used for radial search)
 Filter filter = new DistanceFilter(lat, lng, miles, dq.latFilter, dq.lngFilter);
