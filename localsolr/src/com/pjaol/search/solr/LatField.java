@@ -51,14 +51,14 @@ public class LatField extends FieldType {
 
 	}
 
-	@Override
-	public String toInternal(String val) {
-		return DistanceUtils.latToString(new Double(val).doubleValue());
-	}
-
-	@Override
-	public String toExternal(Fieldable f) {
-		return new Double(DistanceUtils.stringToLat(f.stringValue()))
-				.toString();
-	}
+//	@Override
+//	public String toInternal(String val) {
+//		return DistanceUtils.latToString(new Double(val).doubleValue());
+//	}
+//
+//	@Override
+//	public String toExternal(Fieldable f) {
+//		return new Double(DistanceUtils.stringToLat(f.stringValue()))
+//				.toString();
+//	}
 }

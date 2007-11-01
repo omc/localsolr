@@ -51,14 +51,14 @@ public class LngField extends FieldType {
 
 	}
 
-	@Override
-	public String toInternal(String val) {
-		return DistanceUtils.lngToString(new Double(val).doubleValue());
-	}
-
-	@Override
-	public String toExternal(Fieldable f) {
-		return new Double(DistanceUtils.stringToLng(f.stringValue()))
-				.toString();
-	}
+//	@Override
+//	public String toInternal(String val) {
+//		return DistanceUtils.lngToString(new Double(val).doubleValue());
+//	}
+//
+//	@Override
+//	public String toExternal(Fieldable f) {
+//		return new Double(DistanceUtils.stringToLng(f.stringValue()))
+//				.toString();
+//	}
 }
