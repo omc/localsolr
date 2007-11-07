@@ -33,6 +33,7 @@ import com.pjaol.lucene.search.SerialChainFilter;
 import com.pjaol.search.geo.utils.DistanceFilter;
 import com.pjaol.search.geo.utils.DistanceQuery;
 import com.pjaol.search.geo.utils.DistanceSortSource;
+import com.pjaol.search.solr.LocalSolrSortParser.LocalSolrSortSpec;
 
 public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 
@@ -81,7 +82,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      String lng = p.get("long");
 	      
 	      String radius = p.get("radius");
-	      
+	      String sortby = p.get(CommonParams.SORT);
 	      
 	      
 	      // find fieldnames to return (fieldlist)
@@ -114,6 +115,8 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      List<Query> filters = U.parseFilterQueries(req);
 	      SolrIndexSearcher s = req.getSearcher();
 	      DocSet f = null;
+	     
+	      
 	      DistanceFilter filter = null;
 	      DistanceSortSource dsort = null;
 	      
@@ -136,7 +139,22 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	    	  f = s.convertFilter(scf);
 	    	  
 	    	  dsort = new DistanceSortSource(filter);
-	    	  sort = new Sort(new SortField("foo", dsort));
+	 
+	    	  if (commands.size() >=2){
+	    		  if (sortby !=null)
+	    			  sortby += commands.get(1);
+	    		  else
+	    			  sortby = commands.get(1);
+	    		  
+	    	  }
+	    	  if (sortby != null) {
+	    		  System.out.println("**** Doing localsort");
+	    		  LocalSolrSortSpec lss = new LocalSolrSortParser().parseSort(sortby, req.getSchema(), dsort);
+	    		  if (lss != null) {
+	    			  sort = lss.getSort();
+	    		  }
+	    		  System.out.println("*** sortValue "+ lss.toString()+" --"+ sort.toString());
+	    	  }
 	    	
 	      }
 	      
@@ -159,7 +177,9 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      }
 
 	      if (filter != null ){
-	    	  dsort.cleanUp();
+	    	  if (dsort != null)
+	    		  dsort.cleanUp();
+	    	  
 	    	  sort = null;
 	    	  rsp.add("distances", filter.getDistances());
 	      }
