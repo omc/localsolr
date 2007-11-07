@@ -42,7 +42,10 @@ public class DistanceSortSource implements SortComparatorSource {
 	
 	public void cleanUp() {
 		distanceFilter = null;
-		dsdlc.cleanUp();
+		
+		if (dsdlc !=null)
+			dsdlc.cleanUp();
+		
 		dsdlc = null;
 	}
 	
