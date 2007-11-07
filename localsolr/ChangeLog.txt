@@ -1,7 +1,11 @@
 $File: $
-$Log: not supported by cvs2svn $
 Revision 1.1  2007/09/18 03:51:22  pjaol
 Created a change log
+
+Moved sorting to solr's sort parameter
+sort=geo_distance asc 
+sort=geo_distance asc, field1 asc, field2 desc 
+etc....
 
 Created clean up procedures for distance sorting.
 
