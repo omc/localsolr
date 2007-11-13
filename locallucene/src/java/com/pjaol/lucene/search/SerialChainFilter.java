@@ -21,8 +21,6 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Filter;
 
-import com.pjaol.search.geo.utils.BoundaryBoxFilter;
-
 /**
  * 
  * Provide a serial chain filter, passing the bitset in with the
@@ -181,5 +179,30 @@ public class SerialChainFilter extends Filter {
       }
 
       return h;
+    }
+    
+    public String toString() {
+    	StringBuffer buf = new StringBuffer();
+    	buf.append("SerialChainFilter(");
+    	for (int i = 0; i < chain.length; i++) {
+    		switch(actionType[i]) {
+			case (SERIALAND): 
+				buf.append("SERIALAND");
+				break;
+			case (SERIALOR):
+				buf.append("SERIALOR");
+				break;
+			case (AND):
+				buf.append("AND");
+				break;
+			case (OR):
+				buf.append("OR");
+				break;
+			default:
+				buf.append(actionType[i]);
+    		}
+    		buf.append(" " + chain[i].toString() + " ");
+    	}
+    	return buf.toString().trim() + ")";
     }
 }
