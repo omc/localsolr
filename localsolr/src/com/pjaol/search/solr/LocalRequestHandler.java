@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.params.CommonParams;
@@ -26,6 +25,7 @@ import org.apache.solr.search.DocListAndSet;
 import org.apache.solr.search.DocSet;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.SolrIndexSearcher;
+import org.apache.solr.search.QueryParsing.SortSpec;
 import org.apache.solr.util.HighlightingUtils;
 import org.apache.solr.util.SolrPluginUtils;
 
@@ -33,8 +33,15 @@ import com.pjaol.lucene.search.SerialChainFilter;
 import com.pjaol.search.geo.utils.DistanceFilter;
 import com.pjaol.search.geo.utils.DistanceQuery;
 import com.pjaol.search.geo.utils.DistanceSortSource;
-import com.pjaol.search.solr.LocalSolrSortParser.LocalSolrSortSpec;
 
+/**
+ * @deprecated
+ * Refactored to match solr-281 patch. Scheduled for removal in later releases
+ * Use LocalSolrRequestHandler for future releases.
+ * 
+ * @see LocalSolrRequestHandler
+ *
+ */
 public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 
 	  // statistics
@@ -149,7 +156,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	    	  }
 	    	  if (sortby != null) {
 	    		  System.out.println("**** Doing localsort");
-	    		  LocalSolrSortSpec lss = new LocalSolrSortParser().parseSort(sortby, req.getSchema(), dsort);
+	    		  SortSpec lss = new LocalSolrSortParser().parseSort(sortby, req.getSchema(), dsort);
 	    		  if (lss != null) {
 	    			  sort = lss.getSort();
 	    		  }

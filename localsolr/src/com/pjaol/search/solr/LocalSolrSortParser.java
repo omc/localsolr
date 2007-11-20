@@ -7,6 +7,8 @@ import org.apache.lucene.search.SortField;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
+import org.apache.solr.search.QueryParsing;
+import org.apache.solr.search.QueryParsing.SortSpec;
 
 import com.pjaol.search.geo.utils.DistanceSortSource;
 
@@ -16,7 +18,7 @@ public class LocalSolrSortParser {
 	
 	private String stringValue;
 	
-	public LocalSolrSortSpec parseSort(String sortSpec,
+	public SortSpec parseSort(String sortSpec,
 			IndexSchema schema,  DistanceSortSource ds) {
 		if (sortSpec == null || sortSpec.length() == 0)
 			return null;
@@ -88,7 +90,8 @@ public class LocalSolrSortParser {
 		// return null;
 		// For more info on the 'num' field, -1,
 		// see: https://issues.apache.org/jira/browse/SOLR-99
-		return new LocalSolrSortSpec(new Sort(lst), -1, stringValue);
+		return new QueryParsing.SortSpec(new Sort(lst), -1);
+		//return new QueryParsing.SortSpec(new Sort(lst), -1);
 
 	}
 
@@ -100,7 +103,8 @@ public class LocalSolrSortParser {
 	 * SortSpec encapsulates a Lucene Sort and a count of the number of
 	 * documents to return.
 	 */
-	public static class LocalSolrSortSpec {
+	public static class LocalSolrSortSpec{
+
 		private final Sort sort;
 
 		private final int num;
