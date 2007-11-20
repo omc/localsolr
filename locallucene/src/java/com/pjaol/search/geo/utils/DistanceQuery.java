@@ -16,9 +16,12 @@ package com.pjaol.search.geo.utils;
 
 import java.awt.geom.Rectangle2D;
 
+import org.apache.lucene.search.CachingWrapperFilter;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryFilter;
+import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.solr.util.NumberUtils;
 
 import com.pjaol.lucene.search.SerialChainFilter;
@@ -84,6 +87,15 @@ public class DistanceQuery{
 				                     new int[] {SerialChainFilter.AND,
 						                        SerialChainFilter.AND,
 						                        SerialChainFilter.SERIALAND});
+	}
+	
+	public Filter getFilter(Query query) {
+		QueryWrapperFilter qf = new QueryWrapperFilter(query);
+		return new SerialChainFilter(new Filter[] {latFilter, lngFilter, qf, distanceFilter},
+									new int[] {SerialChainFilter.AND, 
+											SerialChainFilter.AND,
+											SerialChainFilter.AND,
+											SerialChainFilter.SERIALAND});
 	}
 	  
 	public Query getQuery() {

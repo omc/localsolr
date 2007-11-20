@@ -8,6 +8,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.logging.Logger;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -34,6 +35,7 @@ public class BoundaryBoxFilter extends Filter {
     private String upperTerm;
     private boolean includeLower;
     private boolean includeUpper;
+	private Logger log = Logger.getLogger(getClass().getName());
 	
     /* cache of values extracted from the index */
     /* TODO: add generics */
@@ -78,6 +80,8 @@ public class BoundaryBoxFilter extends Filter {
      * not.
      */
     public BitSet bits(IndexReader reader) throws IOException {
+    	long start = System.currentTimeMillis();
+    	
         BitSet bits = new BitSet(reader.maxDoc());
         TermEnum enumerator =
             (null != lowerTerm
@@ -134,6 +138,8 @@ public class BoundaryBoxFilter extends Filter {
             enumerator.close();
         }
 
+        long end = System.currentTimeMillis();
+        log.info("BoundaryBox Time Taken: "+ (end - start));
         return bits;
     }
     

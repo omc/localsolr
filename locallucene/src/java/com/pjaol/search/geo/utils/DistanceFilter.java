@@ -254,5 +254,10 @@ public class DistanceFilter extends ISerialChainFilter {
 			precise = precision.TWOHUNDREDFEET;
 		}
 	}
+
+	public void setDistances(Map<Integer, Double> distances) {
+		this.distances = distances;
+	}
+
 	
 }
