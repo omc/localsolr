@@ -66,7 +66,7 @@ public class LocalSolrSortParser {
 				}
 			} else if (part.equals("geo_distance")) {
 			
-				lst[i] = new SortField("foo", ds, top);
+				lst[i] = new SortField("geo_distance", ds, top);
 			
 			} else {
 				// getField could throw an exception if the name isn't found

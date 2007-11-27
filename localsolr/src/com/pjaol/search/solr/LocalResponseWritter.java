@@ -309,9 +309,13 @@ public class LocalResponseWritter implements QueryResponseWriter {
 	public final void writeDoc(String name, Document doc, Set<String> returnFields, float score, boolean includeScore, int docid) throws IOException {
 	    startTag("doc", name, false);
 	    
-	    writer.write("<distance><![CDATA["+ formatDistance((Double) distances.get(docid))+"]]></distance>");
-		
+	//	    writer.write("<distance><![CDATA["+ formatDistance((Double) distances.get(docid))+"]]></distance>");
+	//		
 	      
+	    if(distances != null)
+	    	writer.write("<str name=\"geo_distance\">" 	+
+	    			formatDistance((Double) distances.get(docid)) +
+	    			"</str>");
 	    // Lucene Documents have multivalued types as multiple fields
 	    // with the same name.
 	    // The XML needs to represent these as
