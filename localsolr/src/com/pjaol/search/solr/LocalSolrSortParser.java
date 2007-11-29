@@ -7,8 +7,7 @@ import org.apache.lucene.search.SortField;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
-import org.apache.solr.search.QueryParsing;
-import org.apache.solr.search.QueryParsing.SortSpec;
+import org.apache.solr.search.SortSpec;
 
 import com.pjaol.search.geo.utils.DistanceSortSource;
 
@@ -90,7 +89,7 @@ public class LocalSolrSortParser {
 		// return null;
 		// For more info on the 'num' field, -1,
 		// see: https://issues.apache.org/jira/browse/SOLR-99
-		return new QueryParsing.SortSpec(new Sort(lst), -1);
+		return new SortSpec(new Sort(lst), -1);
 		//return new QueryParsing.SortSpec(new Sort(lst), -1);
 
 	}

@@ -25,7 +25,7 @@ import org.apache.solr.search.DocListAndSet;
 import org.apache.solr.search.DocSet;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.SolrIndexSearcher;
-import org.apache.solr.search.QueryParsing.SortSpec;
+import org.apache.solr.search.SortSpec;
 import org.apache.solr.util.HighlightingUtils;
 import org.apache.solr.util.SolrPluginUtils;
 
@@ -109,12 +109,7 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	      // we can use the Lucene sort ability.
 	      Sort sort = null;
 	      if (commands.size() >= 2) {
-	        QueryParsing.SortSpec sortSpec = QueryParsing.parseSort(commands.get(1), req.getSchema());
-	        if (sortSpec != null) {
-	          sort = sortSpec.getSort();
-	          // ignore the count for now... it's currently only controlled by start & limit on req
-	          // count = sortSpec.getCount();
-	        }
+	        sort = QueryParsing.parseSort(commands.get(1), req.getSchema());
 	      }
 
 	      DocListAndSet results = new DocListAndSet();

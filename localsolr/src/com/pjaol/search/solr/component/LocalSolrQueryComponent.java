@@ -2,7 +2,6 @@ package com.pjaol.search.solr.component;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -29,13 +28,12 @@ import org.apache.solr.search.DocSet;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.SolrCache;
 import org.apache.solr.search.SolrIndexSearcher;
-import org.apache.solr.search.QueryParsing.SortSpec;
+import org.apache.solr.search.SortSpec;
 import org.apache.solr.util.SolrPluginUtils;
 
 import com.pjaol.search.geo.utils.DistanceQuery;
 import com.pjaol.search.geo.utils.DistanceSortSource;
 import com.pjaol.search.solr.LocalSolrSortParser;
-import com.pjaol.search.solr.LocalSolrSortParser.LocalSolrSortSpec;
 
 public class LocalSolrQueryComponent extends SearchComponent {
 
