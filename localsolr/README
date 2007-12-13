@@ -1,0 +1,7 @@
+$File: $
+LocalSolr is a port of locallucene to a solr implementation
+Supprt for radial searching, and sort by distance is provided
+
+Detail on usage are available from http://locallucene.wiki.sourceforge.net/
+
+
