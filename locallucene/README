@@ -17,7 +17,7 @@ Compiling from source
 ====================
 
 The Most up to date version of local lucene and libaries is available from 
-http://www.nsshutdown.com/viewcvs/viewcvs.cgi/locallucene/
+http://sourceforge.net/projects/locallucene
 
 Requirements
 JSDK 1.5+
@@ -35,7 +35,7 @@ Lucene 2 (Apache 2.0)
 Traverse Technologies Fulcurm com.traversetechnologies.fulcrum.math.LonLatTrig.java (LGPL)
 	http://www.traversetechnologies.com/
 
-All are also available from http://www.nsshutdown.com/viewcvs/viewcvs.cgi/locallucene/
+All are also available from http://locallucene.svn.sourceforge.net/viewvc/locallucene/
 
 
 The default compile run's junit to do so run
