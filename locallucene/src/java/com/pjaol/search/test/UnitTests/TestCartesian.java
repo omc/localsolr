@@ -1,5 +1,5 @@
 /**
- * * Copyright 2007 Patrick O'Leary 
+ * * Copyright 2007 Patrick O'Leary
  * Licensed under the Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
  * You may obtain a copy of the License at 
@@ -15,6 +15,8 @@
 package com.pjaol.search.test.UnitTests;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
@@ -24,7 +26,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -34,19 +35,24 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.solr.util.NumberUtils;
 
-import com.pjaol.lucene.search.SerialChainFilter;
-import com.pjaol.search.geo.utils.DistanceFilter;
+import com.pjaol.search.geo.utils.CartesianPolyFilter;
 import com.pjaol.search.geo.utils.DistanceQuery;
 import com.pjaol.search.geo.utils.DistanceSortSource;
 import com.pjaol.search.geo.utils.DistanceUtils;
 import com.pjaol.search.geo.utils.InvalidGeoException;
+import com.pjaol.search.geo.utils.projections.CartesianTierPlotter;
+import com.pjaol.search.geo.utils.projections.IProjector;
+import com.pjaol.search.geo.utils.projections.SinusoidalProjector;
 
 /**
  * @author pjaol
  *
  */
-public class TestDistance extends TestCase{
+public class TestCartesian extends TestCase{
 
+	/**
+	 * @param args
+	 */
 	
 	private RAMDirectory directory;
 	private IndexSearcher searcher;
@@ -55,15 +61,62 @@ public class TestDistance extends TestCase{
 	private double lng= -77.386398;
 	private String latField = "lat";
 	private String lngField = "lng";
+	private List<CartesianTierPlotter> ctps = new LinkedList<CartesianTierPlotter>();
 	
+	private IProjector project = new SinusoidalProjector();
 	
+//	public static void main(String[] args) {
+//		
+//		IProjector projector = new SinusoidalProjector();
+//		CartesianTierPlotter ctp = new CartesianTierPlotter(6, projector);
+//	
+//		double lat = 38.969398; 
+//		double lng= -77.386398;
+//		double c[] = projector.coords(lat, lng);
+//		System.out.println(c[0] + ", "+c[1]);
+//		System.out.println(ctp.getTierBoxId(lat, lng));
+//		System.out.println(ctp.getTierFieldName());
+//		
+//		System.out.println("Creating cartesian index");
+//		CartesianPolyFilter cpf = new CartesianPolyFilter();
+//		cpf.boundaryBox(lat, lng, 100);
+//		
+//		TestCartesian ct = new TestCartesian();
+//		try {
+//			ct.setUp();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		try {
+//			ct.testRange();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (InvalidGeoException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
+
 	protected void setUp() throws IOException {
 		directory = new RAMDirectory();
 		IndexWriter writer = new IndexWriter(directory, new WhitespaceAnalyzer(), true);
+		
+		setUpPlotter( 2, 15);
+		
 		addData(writer);
 		
 	}
 	
+	
+	private void setUpPlotter(int base, int top) {
+		
+		for (int i = 0; base < top; base ++){
+			ctps.add(new CartesianTierPlotter(base,project ));
+			i++;
+		}
+	}
 	
 	private void addPoint(IndexWriter writer, String name, double lat, double lng) throws IOException{
 		
@@ -77,11 +130,21 @@ public class TestDistance extends TestCase{
 		
 		// add a default meta field to make searching all documents easy 
 		doc.add(new Field("metafile", "doc",Field.Store.YES, Field.Index.TOKENIZED));
+		
+		int ctpsize = ctps.size();
+		for (int i =0; i < ctpsize; i++){
+			CartesianTierPlotter ctp = ctps.get(i);
+			doc.add(new Field(ctp.getTierFieldName(), 
+					NumberUtils.double2sortableStr(ctp.getTierBoxId(lat,lng)),
+					Field.Store.YES, 
+					Field.Index.NO_NORMS));
+		}
 		writer.addDocument(doc);
 		
 	}
 	
-
+	
+	
 	private void addData(IndexWriter writer) throws IOException {
 		addPoint(writer,"McCormick &amp; Schmick's Seafood Restaurant",38.9579000,-77.3572000);
 		addPoint(writer,"Jimmy's Old Town Tavern",38.9690000,-77.3862000);
@@ -109,10 +172,9 @@ public class TestDistance extends TestCase{
 		double miles = 6.0;
 
 		// create a distance query
-		DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField, false);
+		DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField, true);
 		 
-		System.out.println(dq.latFilter.toString() +" "+ dq.lngFilter);
-		
+		System.out.println(dq);
 		//create a term query to search against all documents
 		Query tq = new TermQuery(new Term("metafile", "doc"));
 		
@@ -143,7 +205,10 @@ public class TestDistance extends TestCase{
 		System.out.println("Distance Filter filtered: " + distances.size());
 		System.out.println("Results: " + results);
 		System.out.println("=============================");
-		assertEquals(6, distances.size());
+		System.out.println("Distances should be 9 "+ distances.size());
+		System.out.println("Results should be 6 "+ results);
+
+		assertEquals(9, distances.size());
 		assertEquals(6, results);
 		
 		for(int i =0 ; i < results; i++){
@@ -162,34 +227,4 @@ public class TestDistance extends TestCase{
 		}
 	}
 	
-	
-	public void testMiles() {
-		double LLM = DistanceUtils.getLLMDistance(lat, lng,39.012200001, -77.3942);
-		System.out.println(LLM);
-		System.out.println("-->"+DistanceUtils.getDistanceMi(lat, lng, 39.0122, -77.3942));
-	}
-	
-	public void testMiles2(){
-		System.out.println("Test Miles 2");
-		double LLM = DistanceUtils.getLLMDistance(44.30073, -78.32131,43.687267, -79.39842);
-		System.out.println(LLM);
-		System.out.println("-->"+DistanceUtils.getDistanceMi(44.30073, -78.32131, 43.687267, -79.39842));
-		
-	}
-
-	
-	public void testDistanceQueryCacheable() throws IOException {
-
-		// create two of the same distance queries
-		double miles = 6.0;
-		DistanceQuery dq1 = new DistanceQuery(lat, lng, miles, latField, lngField, false);
-		DistanceQuery dq2 = new DistanceQuery(lat, lng, miles, latField, lngField, false);
-
-		/* ensure that they hash to the same code, which will cause a cache hit in solr */
-		assertEquals(dq1.getQuery().hashCode(), dq2.getQuery().hashCode());
-		
-		/* ensure that changing the radius makes a different hash code, creating a cache miss in solr */
-		DistanceQuery widerQuery = new DistanceQuery(lat, lng, miles + 5.0, latField, lngField, false);
-		assertTrue(dq1.getQuery().hashCode() != widerQuery.getQuery().hashCode());
-	}
 }

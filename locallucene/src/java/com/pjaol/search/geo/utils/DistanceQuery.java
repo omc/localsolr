@@ -22,9 +22,11 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryFilter;
 import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.RangeFilter;
 import org.apache.solr.util.NumberUtils;
 
 import com.pjaol.lucene.search.SerialChainFilter;
+import com.pjaol.search.geo.utils.projections.CartesianTierPlotter;
 
 public class DistanceQuery{
 
@@ -42,6 +44,8 @@ public class DistanceQuery{
 	private double miles;
 	private String latField;
 	private String lngField;
+	private boolean useCartesian = false;
+	private RangeFilter cartesianFilter;
 	
 	/**
 	 * Create a distance query using
@@ -53,23 +57,29 @@ public class DistanceQuery{
 	 * @param lng
 	 * @param miles
 	 */
-	public DistanceQuery (double lat, double lng, double miles, String latField, String lngField){
+	public DistanceQuery (double lat, double lng, double miles, String latField, String lngField, boolean useCartesian){
 
 	    this.lat = lat;
 	    this.lng = lng;
 	    this.miles = miles;
 	    this.latField = latField;
 	    this.lngField = lngField;
-
+	    this.useCartesian = useCartesian;
+	    
 	    /* create boundary box filters */
 		Rectangle2D box = DistanceUtils.getBoundary(lat, lng, miles);
-		latFilter = new BoundaryBoxFilter(latField, NumberUtils.double2sortableStr(box.getY()), NumberUtils.double2sortableStr(box.getMaxY()), 
+		
+		if (! useCartesian) {
+			latFilter = new BoundaryBoxFilter(latField, NumberUtils.double2sortableStr(box.getY()), NumberUtils.double2sortableStr(box.getMaxY()), 
 		                                  true, true);
-		lngFilter = new BoundaryBoxFilter(lngField, NumberUtils.double2sortableStr(box.getX()), NumberUtils.double2sortableStr(box.getMaxX()), 
+			lngFilter = new BoundaryBoxFilter(lngField, NumberUtils.double2sortableStr(box.getX()), NumberUtils.double2sortableStr(box.getMaxX()), 
 		                                  true, true);
-
+		} else {
+			CartesianPolyFilter cpf = new CartesianPolyFilter();
+			cartesianFilter = cpf.boundaryBox(lat, lng, (int)miles);
+		}
 	    /* create precise distance filter */
-		distanceFilter = new DistanceFilter(lat, lng, miles, latFilter, lngFilter);
+		distanceFilter = new DistanceFilter(lat, lng, miles, latField, lngField);
 	}
 
    /**
@@ -83,6 +93,14 @@ public class DistanceQuery{
 	* @param miles
 	*/
 	public Filter getFilter() {
+		
+		if (useCartesian){
+			return new SerialChainFilter(new Filter[] {cartesianFilter, distanceFilter},
+                    new int[] {SerialChainFilter.AND,
+		                       SerialChainFilter.SERIALAND});
+
+		}
+		
 	    return new SerialChainFilter(new Filter[] {latFilter, lngFilter, distanceFilter},
 				                     new int[] {SerialChainFilter.AND,
 						                        SerialChainFilter.AND,
@@ -91,6 +109,13 @@ public class DistanceQuery{
 	
 	public Filter getFilter(Query query) {
 		QueryWrapperFilter qf = new QueryWrapperFilter(query);
+		
+		if (useCartesian){
+			return new SerialChainFilter(new Filter[] {cartesianFilter, qf, distanceFilter},
+					new int[] {SerialChainFilter.AND, 
+							SerialChainFilter.AND,
+							SerialChainFilter.SERIALAND});
+		}
 		return new SerialChainFilter(new Filter[] {latFilter, lngFilter, qf, distanceFilter},
 									new int[] {SerialChainFilter.AND, 
 											SerialChainFilter.AND,

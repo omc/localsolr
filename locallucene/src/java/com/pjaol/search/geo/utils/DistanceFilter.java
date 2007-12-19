@@ -65,20 +65,9 @@ public class DistanceFilter extends ISerialChainFilter {
 		this.lng = lng;
 		this.latField = latField;
 		this.lngField = lngField;
-		this.lngFilter = null;
-		this.latFilter = null;
 	}
 	
-	public DistanceFilter(double lat, double lng, double miles, BoundaryBoxFilter bblatfilter, BoundaryBoxFilter bblngfilter){
-		
-		distance = miles;
-		this.lat = lat;
-		this.lng = lng;
-		this.latFilter = bblatfilter;
-		this.lngFilter = bblngfilter;
-		this.latField = this.latFilter.getFieldName();
-		this.lngField = this.lngFilter.getFieldName();
-	}
+
 	
 	
 	public Map<Integer,Double> getDistances(){
@@ -146,15 +135,7 @@ public class DistanceFilter extends ISerialChainFilter {
 	@Override
 	public BitSet bits(IndexReader reader, BitSet bits) throws Exception {
 
-		/* ensure this method is only run downstream from a boundary box filter */
-		if (lngFilter == null || latFilter == null) {
-			
-			// should not be here!
-			// DistanceFilter was initialized without a boundary box pass
-			throw new Exception("DistanceFilter not initialized with serial chain correctly");
-		
-		}
-			
+	
 		/* Create a BitSet to store the result */
 		int size = bits.cardinality();
 		BitSet result = new BitSet(size);
@@ -181,9 +162,7 @@ public class DistanceFilter extends ISerialChainFilter {
 			// if we have a completed
 			// filter chain, lat / lngs can be retrived from 
 			// memory rather than document base.
-//			String sx = (String)latFilter.getCoord(i);
-//			String sy = (String)lngFilter.getCoord(i);
-//			
+
 			String sx = latIndex[i];
 			String sy = lngIndex[i];
 			x = NumberUtils.SortableStr2double(sx);
