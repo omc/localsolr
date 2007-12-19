@@ -23,6 +23,7 @@ import java.util.WeakHashMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.FieldCache;
 
 import org.apache.solr.util.NumberUtils;
 
@@ -101,14 +102,18 @@ public class DistanceFilter extends ISerialChainFilter {
 	       TODO: Why is this a WeakHashMap? */
 		WeakHashMap<String,Double> cdistance = new WeakHashMap<String,Double>(maxdocs);
 		
+		String[] latIndex = FieldCache.DEFAULT.getStrings(reader, latField);
+		String[] lngIndex = FieldCache.DEFAULT.getStrings(reader, lngField);
+
 		/* store calculated distances for reuse by other components */
 		distances = new HashMap<Integer,Double>(maxdocs);
 		for (int i = 0 ; i < maxdocs; i++) {
 			
-			Document doc = reader.document(i);
-			
-			double x = NumberUtils.SortableStr2double(doc.get(latField));
-			double y = NumberUtils.SortableStr2double(doc.get(lngField));
+			String sx = latIndex[i];
+			String sy = lngIndex[i];
+	
+			double x = NumberUtils.SortableStr2double(sx);
+			double y = NumberUtils.SortableStr2double(sy);
 			
 			// round off lat / longs if necessary
 			x = DistanceHandler.getPrecision(x, precise);
@@ -165,6 +170,9 @@ public class DistanceFilter extends ISerialChainFilter {
 		distances = new HashMap<Integer,Double>(size);
 		
 		long start = System.currentTimeMillis();
+		String[] latIndex = FieldCache.DEFAULT.getStrings(reader, latField);
+		String[] lngIndex = FieldCache.DEFAULT.getStrings(reader, lngField);
+		
 	  	/* loop over all set bits (hits from the boundary box filters) */
 	  	int i = bits.nextSetBit(0);
 		while (i >= 0){
@@ -173,9 +181,11 @@ public class DistanceFilter extends ISerialChainFilter {
 			// if we have a completed
 			// filter chain, lat / lngs can be retrived from 
 			// memory rather than document base.
-			String sx = (String)latFilter.getCoord(i);
-			String sy = (String)lngFilter.getCoord(i);
-			
+//			String sx = (String)latFilter.getCoord(i);
+//			String sy = (String)lngFilter.getCoord(i);
+//			
+			String sx = latIndex[i];
+			String sy = lngIndex[i];
 			x = NumberUtils.SortableStr2double(sx);
 			y = NumberUtils.SortableStr2double(sy);
 			
@@ -208,9 +218,7 @@ public class DistanceFilter extends ISerialChainFilter {
 				" results : "+ distances.size() + 
 				" cached : "+ cdistance.size());
 	
-		/* TODO: Cleanup on latFilter and lngFilter should be called outside of this method */
-		latFilter.cleanUp();
-		lngFilter.cleanUp();
+
 		cdistance = null;
 		
 		return result;

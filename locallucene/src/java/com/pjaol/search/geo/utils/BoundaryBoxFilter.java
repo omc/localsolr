@@ -39,7 +39,7 @@ public class BoundaryBoxFilter extends Filter {
 	
     /* cache of values extracted from the index */
     /* TODO: add generics */
-    private Map coords;
+    //private Map coords;
     
     /**
      * @param fieldName The field this range applies to
@@ -88,7 +88,7 @@ public class BoundaryBoxFilter extends Filter {
              ? reader.terms(new Term(fieldName, lowerTerm))
              : reader.terms(new Term(fieldName,"")));
         
-        coords = new HashMap(enumerator.docFreq());
+        //coords = new HashMap(enumerator.docFreq());
         
         try {
             
@@ -122,7 +122,7 @@ public class BoundaryBoxFilter extends Filter {
                             termDocs.seek(enumerator.term());
                             while (termDocs.next()) {
                                 bits.set(termDocs.doc());
-                                coords.put(termDocs.doc(), term.text());
+                                
                             }
                         }
                     } else {
@@ -144,18 +144,7 @@ public class BoundaryBoxFilter extends Filter {
     }
     
     
-    //return the coords hash map
-    public Map getCoords() {
-    	return coords;
-    }
-
-    public Object getCoord(int docid){
-    	return coords.get(docid);
-    }
-    
-    public void cleanUp () {
-    	coords = null;
-    }
+ 
     
     public String toString() {
         StringBuffer buffer = new StringBuffer();
