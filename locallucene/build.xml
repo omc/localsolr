@@ -66,6 +66,7 @@
     		<classpath refid="lib.path"/>
     		<classpath path="${build.dir}"/>
     		<test name="com.pjaol.search.test.UnitTests.TestDistance" />
+    		<test name="com.pjaol.search.test.UnitTests.TestCartesian" />
     	</junit>
         
     </target>
