@@ -129,8 +129,8 @@ public class LocalRequestHandler implements SolrRequestHandler, SolrInfoMBean {
 	    	  double dradius = new Double(radius).doubleValue();
 	    	  
 	    	  //TODO pull lat/long from config
-	    	  DistanceQuery dq = new DistanceQuery(dlat,dlng,dradius, "lat", "lng");
-	    	  filter = new DistanceFilter(dlat, dlng, dradius, dq.latFilter, dq.lngFilter);
+	    	  DistanceQuery dq = new DistanceQuery(dlat,dlng,dradius, "lat", "lng", false);
+	    	  filter = new DistanceFilter(dlat, dlng, dradius, "lat", "lng");
 	    	  
 	    	  SerialChainFilter scf = new SerialChainFilter(new Filter[] {dq.latFilter, dq.lngFilter, filter} ,
 	  				new int[] {SerialChainFilter.AND,

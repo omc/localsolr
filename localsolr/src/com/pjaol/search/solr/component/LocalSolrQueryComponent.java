@@ -76,7 +76,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			double dradius = new Double(radius).doubleValue();
 
 			// TODO pull lat/long from config
-			dq = new DistanceQuery(dlat, dlng, dradius, "lat", "lng");
+			dq = new DistanceQuery(dlat, dlng, dradius, "lat", "lng", false);
 
 			dsort = new DistanceSortSource(dq.distanceFilter);
 		}
