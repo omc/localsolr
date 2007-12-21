@@ -14,7 +14,6 @@
  */
 package com.pjaol.search.geo.utils.projections;
 
-import java.math.BigDecimal;
 
 /**
  * @author pjaol
@@ -94,6 +93,7 @@ public class CartesianTierPlotter {
 		return Math.floor(coord / (idd / this.tierLength));
 	}
 	
+	@SuppressWarnings("unused")
 	private double getBoxId (double coord, int tierLen){
 		return Math.floor(coord / (idd / tierLen) );
 	}
@@ -107,31 +107,40 @@ public class CartesianTierPlotter {
 		return fieldPrefix + this.tierLevel;
 	}
 	
+	/**
+	 * get the string name representing tierId
+	 * _localTier&lt;tierId&gt;
+	 * @param tierId
+	 * @return
+	 */
 	public String getTierFieldName (int tierId){
 		
 		return fieldPrefix + tierId;
 	}
+	
 	/**
 	 * Find the tier with the best fit for a bounding box
-	 * Best fit is defined as min tierId where 
-	 * tierHBoxX - tierHBoxY >1
-	 * 
+	 * Best fit is defined as the ceiling of
+	 *  log2 (circumference of earth / distance) 
 	 * 
 	 * @param latitude
 	 * @param longitude
 	 * @return
 	 */
-	
 	public int bestFit(int miles){
 		
-		//28,892 circumference of the earth
+		//28,892 a rough circumference of the earth
 		int circ = 28892;
 		double times = circ / miles;
-		
 		return (int)Math.ceil(log2(times));
 	}
 	
-	
+	/**
+	 * a log to the base 2 formula
+	 * <code>Math.log(value) / Math.log(2)</code>
+	 * @param value
+	 * @return
+	 */
 	public double log2(double value) {
 		
 		return Math.log(value) / Math.log(2);
