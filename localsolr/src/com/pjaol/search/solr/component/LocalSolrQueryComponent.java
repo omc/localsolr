@@ -76,7 +76,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			double dradius = new Double(radius).doubleValue();
 
 			// TODO pull lat/long from config
-			dq = new DistanceQuery(dlat, dlng, dradius, "lat", "lng", false);
+			dq = new DistanceQuery(dlat, dlng, dradius, "lat", "lng", true);
 
 			dsort = new DistanceSortSource(dq.distanceFilter);
 		}
@@ -192,7 +192,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 			if (!cachedDistances) {
 				// use a standard query
-				log.fine("Standard query...");
+				log.info("Standard query...");
 
 				builder
 						.setResults(searcher
@@ -202,7 +202,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 										builder.getFieldFlags()));
 			} else {
 				// use a cached query
-				log.fine("Cached query....");
+				log.info("Cached query....");
 				builder.setResults(searcher
 						.getDocListAndSet(builder.getQuery(), dq.getQuery(),
 								sort, params.getInt(CommonParams.START, 0),
@@ -212,16 +212,16 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		} else {
 
-			log.fine("DocList query....");
+			log.info("DocList query....");
 			DocListAndSet results = new DocListAndSet();
 			if (!cachedDistances) {
-				log.fine("Using reqular...");
+				log.info("Using reqular...");
 				
 				results.docList = searcher.getDocList(builder.getQuery(), f,
 						sort, params.getInt(CommonParams.START, 0), params
 								.getInt(CommonParams.ROWS, 10));
 			} else {
-				log.fine("Using cached.....");
+				log.info("Using cached.....");
 				results.docList = searcher
 						.getDocList(builder.getQuery(), builder.getFilters(),
 								sort, params.getInt(CommonParams.START, 0),
