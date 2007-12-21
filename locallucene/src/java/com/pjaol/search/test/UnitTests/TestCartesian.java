@@ -205,10 +205,10 @@ public class TestCartesian extends TestCase{
 		System.out.println("Distance Filter filtered: " + distances.size());
 		System.out.println("Results: " + results);
 		System.out.println("=============================");
-		System.out.println("Distances should be 9 "+ distances.size());
+		System.out.println("Distances should be 10 "+ distances.size());
 		System.out.println("Results should be 6 "+ results);
 
-		assertEquals(9, distances.size());
+		assertEquals(10, distances.size());
 		assertEquals(6, results);
 		
 		for(int i =0 ; i < results; i++){

@@ -128,7 +128,7 @@ public class CartesianTierPlotter {
 		int circ = 28892;
 		double times = circ / miles;
 		
-		return (int)Math.ceil(log2(times)) +1;
+		return (int)Math.ceil(log2(times));
 	}
 	
 	

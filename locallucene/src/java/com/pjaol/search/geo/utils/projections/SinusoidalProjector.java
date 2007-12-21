@@ -30,9 +30,10 @@ public class SinusoidalProjector implements IProjector {
 	}
 	
 	public double[] coords(double latitude, double longitude) {
-		
-		latitude = (longitude - 0 ) * Math.cos(latitude);
-		double r[] = {latitude, longitude};
+		double rlat = Math.toRadians(latitude);
+		double rlong = Math.toRadians(longitude);
+		double nlat = rlong * Math.cos(rlat);
+		double r[] = {nlat, rlong};
 		return r;
 		
 	}

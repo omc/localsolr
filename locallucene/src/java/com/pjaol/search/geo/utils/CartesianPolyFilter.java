@@ -59,7 +59,7 @@ public class CartesianPolyFilter {
 					true, true);
 		
 		
-		System.out.println(f.toString());
+		
 		return f;
 		
 	}
