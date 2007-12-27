@@ -16,6 +16,7 @@ package com.pjaol.search.geo.utils;
 
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
+import java.util.logging.Logger;
 
 import org.apache.lucene.search.RangeFilter;
 import org.apache.solr.util.NumberUtils;
@@ -31,7 +32,7 @@ import com.pjaol.search.geo.utils.projections.SinusoidalProjector;
 public class CartesianPolyFilter {
 
 	private IProjector projector = new SinusoidalProjector();
-	
+	private Logger log = Logger.getLogger(getClass().getName());
 	public RangeFilter boundaryBox (double latitude, double longitude, int miles){
 		
 		Rectangle2D box = DistanceUtils.getBoundary(latitude, longitude, miles);
@@ -44,16 +45,18 @@ public class CartesianPolyFilter {
 		
 		CartesianTierPlotter ctp = new CartesianTierPlotter(2, projector);
 		int bestFit = ctp.bestFit(miles);
-		System.out.println("Best Fit is : " + bestFit);
+		
+		log.fine("Best Fit is : " + bestFit);
 		ctp = new CartesianTierPlotter(bestFit, projector);
 		
 		
 		double beginAt = ctp.getTierBoxId(latX, longX);
 		double endAt = ctp.getTierBoxId(latY, longY);
+		String fieldName = ctp.getTierFieldName();
 		
-		System.out.println("("+latX+","+longX+")"+beginAt +" -- "+"("+latY+","+longY+")"+ endAt);
+		log.fine("RangeFilter is ("+latX+","+longX+") "+"("+latY+","+longY+") "+fieldName+":["+beginAt +" TO "+ endAt+"]");
 		
-		RangeFilter f = new RangeFilter(ctp.getTierFieldName(), 
+		RangeFilter f = new RangeFilter(fieldName, 
 					NumberUtils.double2sortableStr(beginAt),
 					NumberUtils.double2sortableStr(endAt),
 					true, true);

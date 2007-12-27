@@ -20,6 +20,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -43,9 +44,7 @@ public class DistanceFilter extends ISerialChainFilter {
 	private double lng;
 	private String latField;
 	private String lngField;
-	
-	private BoundaryBoxFilter latFilter;
-	private BoundaryBoxFilter lngFilter;
+	private Logger log = Logger.getLogger(getClass().getName());
 	
 	private Map<Integer,Double> distances = null;
 	private precision precise = null;
@@ -193,9 +192,9 @@ public class DistanceFilter extends ISerialChainFilter {
 		}
 		
 		long end = System.currentTimeMillis();
-		System.out.println("Time taken : "+ (end - start) + 
-				" results : "+ distances.size() + 
-				" cached : "+ cdistance.size());
+		log.fine("Time taken : "+ (end - start) + 
+				", results : "+ distances.size() + 
+				", cached : "+ cdistance.size());
 	
 
 		cdistance = null;

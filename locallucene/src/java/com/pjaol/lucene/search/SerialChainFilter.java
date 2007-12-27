@@ -40,7 +40,7 @@ public class SerialChainFilter extends Filter {
 
 	
 	/**
-	 * $Id: SerialChainFilter.java,v 1.1 2007-10-12 18:45:12 pjaol Exp $
+	 * $Id$
 	 */
 	private static final long serialVersionUID = 1L;
 	private Filter chain[];
