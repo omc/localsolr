@@ -33,8 +33,16 @@ import org.apache.solr.util.SolrPluginUtils;
 
 import com.pjaol.search.geo.utils.DistanceQuery;
 import com.pjaol.search.geo.utils.DistanceSortSource;
+import com.pjaol.search.solr.LocalSolrRequestHandler;
 import com.pjaol.search.solr.LocalSolrSortParser;
 
+/**
+ * {@link LocalSolrQueryComponent}
+ * Can be loaded through {@link LocalSolrRequestHandler}
+ * @see LocalSolrRequestHandler
+ * @author pjaol
+ *
+ */
 public class LocalSolrQueryComponent extends SearchComponent {
 
 	private String DistanceQuery = "DistanceQuery";
@@ -42,6 +50,18 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	private String DistanceCache = "distanceCache";
 
 	private Logger log = Logger.getLogger(getClass().getName());
+	private String latField = "lat";
+	private String lngField = "lng";
+	
+
+	public LocalSolrQueryComponent (String lat, String lng) {
+		
+		if ( lat != null && lng != null){
+			log.info("Setting latField to "+latField +" setting lngField to "+ lngField);
+			latField = lat;
+			lngField = lng;
+		}
+	}
 
 	@Override
 	public void prepare(SolrQueryRequest req, SolrQueryResponse rsp)
@@ -75,8 +95,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			double dlng = new Double(lng).doubleValue();
 			double dradius = new Double(radius).doubleValue();
 
-			// TODO pull lat/long from config
-			dq = new DistanceQuery(dlat, dlng, dradius, "lat", "lng", true);
+			// TODO pull latitude /longitude from configuration 
+			dq = new DistanceQuery(dlat, dlng, dradius, latField, lngField, true);
 
 			dsort = new DistanceSortSource(dq.distanceFilter);
 		}
@@ -192,7 +212,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 			if (!cachedDistances) {
 				// use a standard query
-				log.info("Standard query...");
+				log.fine("Standard query...");
 
 				builder
 						.setResults(searcher
@@ -202,7 +222,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 										builder.getFieldFlags()));
 			} else {
 				// use a cached query
-				log.info("Cached query....");
+				log.fine("Cached query....");
 				builder.setResults(searcher
 						.getDocListAndSet(builder.getQuery(), dq.getQuery(),
 								sort, params.getInt(CommonParams.START, 0),
@@ -212,16 +232,16 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		} else {
 
-			log.info("DocList query....");
+			log.fine("DocList query....");
 			DocListAndSet results = new DocListAndSet();
 			if (!cachedDistances) {
-				log.info("Using reqular...");
+				log.fine("Using reqular...");
 				
 				results.docList = searcher.getDocList(builder.getQuery(), f,
 						sort, params.getInt(CommonParams.START, 0), params
 								.getInt(CommonParams.ROWS, 10));
 			} else {
-				log.info("Using cached.....");
+				log.fine("Using cached.....");
 				results.docList = searcher
 						.getDocList(builder.getQuery(), builder.getFilters(),
 								sort, params.getInt(CommonParams.START, 0),
@@ -241,8 +261,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 			// builder.sort = null;
 			rsp.add("distances", dq.distanceFilter.getDistances());
-//			System.out.println("Distances size"
-//					+ dq.distanceFilter.getDistances().size());
+
 		}
 
 		// Add distance sorted response for merging later...
@@ -291,7 +310,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	@Override
 	public String getSource() {
 
-		return "$File:$";
+		return "$File: $";
 	}
 
 	@Override

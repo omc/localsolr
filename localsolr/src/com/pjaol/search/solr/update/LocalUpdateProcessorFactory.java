@@ -29,6 +29,26 @@ import com.pjaol.search.geo.utils.projections.IProjector;
 import com.pjaol.search.geo.utils.projections.SinusoidalProjector;
 
 /**
+ * {@link LocalUpdateProcessorFactory}
+ * Required for CartesianTier indexing takes string parameters latField lngField
+ * from the solrconfig node.
+ * Example solrconfig.xml is :
+ * <pre>
+ * &lt;updateRequestProcessor&gt;
+ *   &lt;factory name="standard" class="solr.ChainedUpdateProcessorFactory" default="true"&gt;
+ *     &lt;chain class="com.pjaol.search.solr.update.LocalUpdateProcessorFactory"&gt;
+ *       &lt;str name="latField"&gt;lat&lt;/str&gt;
+ *       &lt;str name="lngField"&gt;lng&lt;/str&gt;
+ *       &lt;int name="startTier"&gt;9&lt;/int&gt;
+ *       &lt;int name="endTier"&gt;17&lt;/int&gt;
+ *     &lt;/chain&gt;
+ *     &lt;chain class="solr.LogUpdateProcessorFactory" &gt;
+ *      &lt;!-- &lt;int name="maxNumToLog"&gt;100&lt;/int&gt; --&gt;
+ *     &lt;/chain&gt;
+ *     &lt;chain class="solr.RunUpdateProcessorFactory" /&gt;
+ *   &lt;/factory&gt;
+ * &lt;/updateRequestProcessor&gt;
+ * </pre>
  * @author pjaol
  * 
  */
@@ -104,7 +124,6 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 
 	@Override
 	public void processAdd(AddUpdateCommand cmd) throws IOException {
-		// TODO Auto-generated method stub
 		SolrInputDocument doc = cmd.getSolrInputDocument();
 
 		String lat = (String) doc.getFieldValue("lat");

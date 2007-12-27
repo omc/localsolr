@@ -64,10 +64,10 @@ Edit solr/conf/solrconfig.xml
 ** Configure the query handler (query template)
 <!-- local lucene request handler -->
  <requestHandler name="geo" class="com.pjaol.search.solr.LocalSolrRequestHandler">
-    <!-- default values for query parameters -->
-     <lst name="defaults">
-       <str name="echoParams">explicit</str>
-     </lst>
+    <!-- Custom latitude longitude fields, below are the defaults if not otherwise
+    specified -->
+     <str name="latField">lat</str>
+     <str name="lngField">lng</str>
   </requestHandler>
   
   
