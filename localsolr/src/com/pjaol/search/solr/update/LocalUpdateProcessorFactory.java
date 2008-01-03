@@ -126,8 +126,8 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 	public void processAdd(AddUpdateCommand cmd) throws IOException {
 		SolrInputDocument doc = cmd.getSolrInputDocument();
 
-		String lat = (String) doc.getFieldValue("lat");
-		String lng = (String) doc.getFieldValue("lng");
+		String lat = (String) doc.getFieldValue(latField);
+		String lng = (String) doc.getFieldValue(lngField);
 		log.fine("Adding lat/lngs: "+ lat +", "+lng);
 		
 		if (lat != null && lng != null) {
