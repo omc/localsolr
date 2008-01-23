@@ -34,6 +34,9 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.solr.util.NumberUtils;
+import org.apache.lucene.search.function.CustomScoreQuery;
+import org.apache.lucene.search.function.FieldScoreQuery;
+import org.apache.lucene.search.function.FieldScoreQuery.Type;
 
 import com.pjaol.search.geo.utils.CartesianPolyFilter;
 import com.pjaol.search.geo.utils.DistanceQuery;
@@ -65,39 +68,7 @@ public class TestCartesian extends TestCase{
 	
 	private IProjector project = new SinusoidalProjector();
 	
-//	public static void main(String[] args) {
-//		
-//		IProjector projector = new SinusoidalProjector();
-//		CartesianTierPlotter ctp = new CartesianTierPlotter(6, projector);
-//	
-//		double lat = 38.969398; 
-//		double lng= -77.386398;
-//		double c[] = projector.coords(lat, lng);
-//		System.out.println(c[0] + ", "+c[1]);
-//		System.out.println(ctp.getTierBoxId(lat, lng));
-//		System.out.println(ctp.getTierFieldName());
-//		
-//		System.out.println("Creating cartesian index");
-//		CartesianPolyFilter cpf = new CartesianPolyFilter();
-//		cpf.boundaryBox(lat, lng, 100);
-//		
-//		TestCartesian ct = new TestCartesian();
-//		try {
-//			ct.setUp();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		try {
-//			ct.testRange();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (InvalidGeoException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
+
 
 	protected void setUp() throws IOException {
 		directory = new RAMDirectory();
@@ -172,13 +143,22 @@ public class TestCartesian extends TestCase{
 		double miles = 6.0;
 
 		// create a distance query
-		DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField, true);
+		final DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField, true);
 		 
 		System.out.println(dq);
 		//create a term query to search against all documents
 		Query tq = new TermQuery(new Term("metafile", "doc"));
 		
-		
+		FieldScoreQuery fsQuery = new FieldScoreQuery("geo_distance", Type.FLOAT);
+		CustomScoreQuery customScore = new CustomScoreQuery(tq,fsQuery){
+			
+			public float customScore(int doc, float subQueryScore, float valSrcScore){
+				
+				float score = new Float(1.0d / (double)dq.distanceFilter.getDistance(doc)).floatValue();
+				System.out.println("-->"+ subQueryScore + " | "+score);
+				return score * subQueryScore;
+			}
+		};
 		// Create a distance sort
 		// As the radius filter has performed the distance calculations
 		// already, pass in the filter to reuse the results.
@@ -188,7 +168,7 @@ public class TestCartesian extends TestCase{
 		
 		// Perform the search, using the term query, the serial chain filter, and the
 		// distance sort
-		Hits hits = searcher.search(tq, dq.getFilter(), sort);
+		Hits hits = searcher.search(customScore, dq.getFilter()); //,sort);
 
 		int results = hits.length();
 		
@@ -221,7 +201,7 @@ public class TestCartesian extends TestCase{
 			
 			double distance = DistanceUtils.getDistanceMi(lat, lng, rsLat, rsLng);
 			double llm = DistanceUtils.getLLMDistance(lat, lng, rsLat, rsLng);
-			System.out.println("Name: "+ name +", Distance (res, ortho, harvesine):"+ distance +" |"+ geo_distance +"|"+ llm);
+			System.out.println("Name: "+ name +", Distance (res, ortho, harvesine):"+ distance +" |"+ geo_distance +"|"+ llm +" | score "+ hits.score(i));
 			assertTrue(Math.abs((distance - llm)) < 1);
 			assertTrue((distance < miles ));
 		}

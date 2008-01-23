@@ -73,7 +73,7 @@ public class DistanceFilter extends ISerialChainFilter {
 		return distances;
 	}
 	
-	public Object getDistance(int docid){
+	public Double getDistance(int docid){
 		return distances.get(docid);
 	}
 	
