@@ -45,7 +45,7 @@ public class DistanceQuery{
 	private String latField;
 	private String lngField;
 	private boolean useCartesian = false;
-	private RangeFilter cartesianFilter;
+	private Filter cartesianFilter;
 	
 	/**
 	 * Create a distance query using
@@ -76,7 +76,7 @@ public class DistanceQuery{
 		                                  true, true);
 		} else {
 			CartesianPolyFilter cpf = new CartesianPolyFilter();
-			cartesianFilter = cpf.boundaryBox(lat, lng, (int)miles);
+			cartesianFilter = cpf.getBoundingArea(lat, lng, (int)miles);
 		}
 	    /* create precise distance filter */
 		distanceFilter = new DistanceFilter(lat, lng, miles, latField, lngField);

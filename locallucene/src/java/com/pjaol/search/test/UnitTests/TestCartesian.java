@@ -14,6 +14,7 @@
  */
 package com.pjaol.search.test.UnitTests;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +33,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.solr.util.NumberUtils;
 import org.apache.lucene.search.function.CustomScoreQuery;
@@ -57,7 +60,7 @@ public class TestCartesian extends TestCase{
 	 * @param args
 	 */
 	
-	private RAMDirectory directory;
+	private Directory directory;
 	private IndexSearcher searcher;
 	// reston va
 	private double lat = 38.969398; 
@@ -71,8 +74,13 @@ public class TestCartesian extends TestCase{
 
 
 	protected void setUp() throws IOException {
-		directory = new RAMDirectory();
-		IndexWriter writer = new IndexWriter(directory, new WhitespaceAnalyzer(), true);
+		File luceneDirectory = new File("/tmp/example-lucene");
+		if (! luceneDirectory.exists()) 
+			luceneDirectory.mkdir();
+		
+		directory = FSDirectory.getDirectory(luceneDirectory);
+		
+		IndexWriter writer = new IndexWriter(luceneDirectory, new WhitespaceAnalyzer(), true);
 		
 		setUpPlotter( 2, 15);
 		
@@ -83,9 +91,9 @@ public class TestCartesian extends TestCase{
 	
 	private void setUpPlotter(int base, int top) {
 		
-		for (int i = 0; base < top; base ++){
+		for (; base <= top; base ++){
 			ctps.add(new CartesianTierPlotter(base,project ));
-			i++;
+		
 		}
 	}
 	
@@ -140,7 +148,7 @@ public class TestCartesian extends TestCase{
 	public void testRange() throws IOException, InvalidGeoException {
 		searcher = new IndexSearcher(directory);
 		
-		double miles = 6.0;
+		final double miles = 6.0;
 
 		// create a distance query
 		final DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField, true);
@@ -154,8 +162,13 @@ public class TestCartesian extends TestCase{
 			
 			public float customScore(int doc, float subQueryScore, float valSrcScore){
 				
-				float score = new Float(1.0d / (double)dq.distanceFilter.getDistance(doc)).floatValue();
-				System.out.println("-->"+ subQueryScore + " | "+score);
+				double distance = (double)dq.distanceFilter.getDistance(doc);
+				// boost score shouldn't exceed 1
+				if (distance < 1.0d)
+					distance = 1.0d;
+				//boost by distance is invertly proportional to
+				// to distance from center point to location
+				float score = new Float((miles - distance) / miles ).floatValue();
 				return score * subQueryScore;
 			}
 		};

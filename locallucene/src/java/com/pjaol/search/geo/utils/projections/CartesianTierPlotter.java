@@ -69,6 +69,10 @@ public class CartesianTierPlotter {
 		
 	}
 	
+	public double getTierVerticalPosDivider(){
+		return tierVerticalPosDivider;
+	}
+	
 	/**
 	 * TierBoxId is latitude box id + longitude box id
 	 * where latitude box id, and longitude box id are transposded in to position
@@ -122,6 +126,11 @@ public class CartesianTierPlotter {
 	 * Find the tier with the best fit for a bounding box
 	 * Best fit is defined as the ceiling of
 	 *  log2 (circumference of earth / distance) 
+	 *  distance is defined as the smallest box fitting
+	 *  the corner between a radius and a bounding box.
+	 *  
+	 *  Distances less than a mile return 15, finer granularity is
+	 *  in accurate
 	 * 
 	 * @param latitude
 	 * @param longitude
@@ -131,8 +140,20 @@ public class CartesianTierPlotter {
 		
 		//28,892 a rough circumference of the earth
 		int circ = 28892;
-		double times = circ / miles;
-		return (int)Math.ceil(log2(times));
+		
+		double r = miles / 2.0;
+		
+		double corner = r - Math.sqrt(Math.pow(r, 2) / 2.0d);
+		System.out.println("corner "+ corner);
+		double times = circ / corner;
+		int bestFit =  (int)Math.ceil(log2(times));
+		
+		if (bestFit > 15) {
+			// 15 is the granularity of about 1 mile
+			// finer granularity isn't accurate with standard java math
+			return 15;
+		}
+		return bestFit;
 	}
 	
 	/**

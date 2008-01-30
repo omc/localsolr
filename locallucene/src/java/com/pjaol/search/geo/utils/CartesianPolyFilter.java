@@ -14,10 +14,12 @@
  */
 package com.pjaol.search.geo.utils;
 
-import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.logging.Logger;
 
+import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.RangeFilter;
 import org.apache.solr.util.NumberUtils;
 
@@ -67,4 +69,66 @@ public class CartesianPolyFilter {
 		
 	}
 	
+	
+	public Shape getBoxShape(double latitude, double longitude, int miles){
+		
+		Rectangle2D box = DistanceUtils.getBoundary(latitude, longitude, miles);
+		
+		double latX = box.getY();
+		double latY = box.getMaxY();
+		
+		double longX = box.getX();
+		double longY = box.getMaxX();
+		CartesianTierPlotter ctp = new CartesianTierPlotter(2, projector);
+		int bestFit = ctp.bestFit(miles);
+		
+		log.info("Best Fit is : " + bestFit);
+		ctp = new CartesianTierPlotter(bestFit, projector);
+		Shape shape = new Shape(ctp.getTierFieldName());
+		
+		// generate shape
+		// iterate from startX->endX
+		// 		iterate from startY -> endY
+		//			shape.add(currentLat.currentLong);
+		
+		double beginAt = ctp.getTierBoxId(latX, longX);
+		double endAt = ctp.getTierBoxId(latY, longY);
+		
+		double tierVert = ctp.getTierVerticalPosDivider();
+		System.out.println(" | "+ beginAt+" | "+ endAt);
+		
+		double startX = beginAt - (beginAt %1);
+		double startY = beginAt - startX ; //should give a whole number
+		
+		double endX = endAt - (endAt %1);
+		double endY = endAt -endX; //should give a whole number
+		
+		int scale = (int)Math.log(tierVert);
+		endY = new BigDecimal(endY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
+		startY = new BigDecimal(startY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
+		System.out.println("scale "+scale+" startX "+ startX + " endX "+endX +" startY "+ startY + " endY "+ endY );
+		double xInc = 1 / tierVert;
+		
+		for (; startX <= endX; startX++){
+			
+			double itY = startY;
+			for (; itY <= endY; itY += xInc){
+				//create a boxId
+				// startX.startY
+
+				double boxId = startX + itY ;
+				
+				shape.addBox(boxId);
+			}
+		}
+		
+		
+		return shape;
+	}
+	
+	public Filter getBoundingArea(double latitude, double longitude, int miles) {
+
+		Shape shape = getBoxShape(latitude, longitude, miles);
+		return new CartesianShapeFilter(shape, shape.getTierId());
+	}
 }

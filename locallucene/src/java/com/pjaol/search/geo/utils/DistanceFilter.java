@@ -194,7 +194,8 @@ public class DistanceFilter extends ISerialChainFilter {
 		long end = System.currentTimeMillis();
 		log.fine("Time taken : "+ (end - start) + 
 				", results : "+ distances.size() + 
-				", cached : "+ cdistance.size());
+				", cached : "+ cdistance.size() +
+				", incoming size: "+ size);
 	
 
 		cdistance = null;
