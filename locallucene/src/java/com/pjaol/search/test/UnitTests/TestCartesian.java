@@ -149,7 +149,7 @@ public class TestCartesian extends TestCase{
 		searcher = new IndexSearcher(directory);
 		
 		final double miles = 6.0;
-
+		
 		// create a distance query
 		final DistanceQuery dq = new DistanceQuery(lat, lng, miles, latField, lngField, true);
 		 

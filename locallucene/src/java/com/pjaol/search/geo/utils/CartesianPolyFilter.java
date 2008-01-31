@@ -103,22 +103,26 @@ public class CartesianPolyFilter {
 		double endX = endAt - (endAt %1);
 		double endY = endAt -endX; //should give a whole number
 		
-		int scale = (int)Math.log(tierVert);
+		int scale = (int)Math.log10(tierVert);
 		endY = new BigDecimal(endY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 		startY = new BigDecimal(startY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
-		System.out.println("scale "+scale+" startX "+ startX + " endX "+endX +" startY "+ startY + " endY "+ endY );
-		double xInc = 1 / tierVert;
+		System.out.println("scale "+scale+" startX "+ startX + " endX "+endX +" startY "+ startY + " endY "+ endY +" tierVert "+ tierVert);
+		double xInc = 1.0d / tierVert;
+		xInc = new BigDecimal(xInc).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 		
 		for (; startX <= endX; startX++){
 			
 			double itY = startY;
-			for (; itY <= endY; itY += xInc){
+			while (itY <= endY){
 				//create a boxId
 				// startX.startY
-
 				double boxId = startX + itY ;
-				
 				shape.addBox(boxId);
+				itY += xInc;
+				
+				// java keeps 0.0001 as 1.0E-1
+				// which ends up as 0.000141
+				itY = new BigDecimal(itY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 			}
 		}
 		
