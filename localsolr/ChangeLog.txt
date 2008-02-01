@@ -1,6 +1,25 @@
 $File: $
 Revision 1.1  2007/09/18 03:51:22  pjaol
 
+Updated to the latest version of solr
+Removal of com.pjaol.search.solr.LocalResponseWritter
+LocalSolr now uses solrs native query response writers, this eliminates the need
+for the wt=geoX parameter.
+The configuration for the writer in the solrconfig.xml is no longer needed.
+<!-- local lucene response writer -->
+<queryResponseWriter name="geoX" class="com.pjaol.search.solr.LocalResponseWritter"/>
+
+Can now be removed.
+
+Update of the Cartesian Filter to now accept shapes.
+This can be a first step towards a poly search, furture steps are required
+to create shapes other than a circle.
+
+Fixed a bug where searches of 100 miles + were not generating the right shape.
+Updated the LocalSolrQueryRequestHandler to allow it to be called from solr-281
+searchHandler configuration.
+
+---------------------------------------
 Update of LocalSolrQueryComponent and LocalSolrRequestHandler
 to enable custom latitude longitude fields to be set in the solrconfig.xml with:
 

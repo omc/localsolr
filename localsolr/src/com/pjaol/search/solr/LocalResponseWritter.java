@@ -22,7 +22,12 @@ import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocList;
 import org.apache.solr.search.SolrIndexSearcher;
-
+/**
+ * @deprecated
+ * @author pjaol
+ *
+ */
+@Deprecated
 public class LocalResponseWritter implements QueryResponseWriter {
 
 	public static float CURRENT_VERSION = 2.2f;

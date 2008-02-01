@@ -71,13 +71,6 @@ Edit solr/conf/solrconfig.xml
   </requestHandler>
   
   
-** Configure the response writter (write template)
-<!-- local lucene response writer -->
-<queryResponseWriter name="geoX" class="com.pjaol.search.solr.LocalResponseWritter"/>
-
-This currently requires that latitude and longitude fields are named lat / lng
-in your data.
-
 
 Edit solr/conf/schema.xml
 ** Configure geographical fields
@@ -86,18 +79,16 @@ Edit solr/conf/schema.xml
    <field name="lng" type="sdouble" indexed="true" stored="true"/>
    <dynamicField name="_local*" type="sdouble" indexed="true" stored="true"/>
    
+ 
  The _local* fields can be turned to stored="false" if you don't want
  these generated fields to be displayed. Other wise you could potentially
  use them to find density of results in an area.
- 
- 
- 
+  
  Making a request to localsolr
  =============================
- /solr/select?&qt=geo&wt=geoX&lat=xx.xx&long=yy.yy&q=abc&radius=zz
+ /solr/select?&qt=geo&lat=xx.xx&long=yy.yy&q=abc&radius=zz
  
  qt query template configured in the solrconfig.xml in this example it's 'geo'
- wt write template configured in the solrconfig.xml in this example it's 'geoX'
  lat latitude in degrees
  long longitude in degrees
  q solr query
