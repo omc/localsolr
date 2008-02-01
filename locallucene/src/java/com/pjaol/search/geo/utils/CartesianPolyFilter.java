@@ -106,7 +106,8 @@ public class CartesianPolyFilter {
 		int scale = (int)Math.log10(tierVert);
 		endY = new BigDecimal(endY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 		startY = new BigDecimal(startY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
-		System.out.println("scale "+scale+" startX "+ startX + " endX "+endX +" startY "+ startY + " endY "+ endY +" tierVert "+ tierVert);
+		log.fine("scale "+scale+" startX "+ startX + " endX "+endX +" startY "+ startY + " endY "+ endY +" tierVert "+ tierVert);
+		
 		double xInc = 1.0d / tierVert;
 		xInc = new BigDecimal(xInc).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 		
@@ -121,7 +122,7 @@ public class CartesianPolyFilter {
 				itY += xInc;
 				
 				// java keeps 0.0001 as 1.0E-1
-				// which ends up as 0.000141
+				// which ends up as 0.00011111
 				itY = new BigDecimal(itY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 			}
 		}
