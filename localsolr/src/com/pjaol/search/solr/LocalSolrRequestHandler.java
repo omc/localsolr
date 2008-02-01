@@ -3,7 +3,7 @@ package com.pjaol.search.solr;
 import java.util.ArrayList;
 
 import org.apache.solr.core.SolrCore;
-import org.apache.solr.handler.SearchHandler;
+import org.apache.solr.handler.component.SearchHandler;
 import org.apache.solr.handler.component.DebugComponent;
 import org.apache.solr.handler.component.FacetComponent;
 import org.apache.solr.handler.component.HighlightComponent;
