@@ -67,7 +67,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	public LocalSolrQueryComponent (String lat, String lng) {
 		
 		if ( lat != null && lng != null){
-			log.info("Setting latField to "+latField +" setting lngField to "+ lngField);
+			log.info("Setting latField to "+lat +" setting lngField to "+ lng);
 			latField = lat;
 			lngField = lng;
 		}

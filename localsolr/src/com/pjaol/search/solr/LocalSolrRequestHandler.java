@@ -1,6 +1,9 @@
 package com.pjaol.search.solr;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.SearchHandler;
