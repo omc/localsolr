@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     Mar 2, 2008 11:57:43 AM                                                        
+
+     LocalSolrDemo    
+     Demo for localsolr
+                   
+     pjaol                                                                
+     ====================================================================== -->
+<project name="LocalSolrDemo" default="default">
+    <description>
+            Demo for localsolr
+    </description>
+
+	<property name="locallucene.dir" value="../locallucene"/>
+	<property name="localsolr.dir" value="../localsolr"/>
+	<property name="solr.dir" value="../solr"/>
+	<property name="solr.version" value="1.3"/>
+
+	<!-- ================================= 
+          target: default              
+         ================================= -->
+    <target name="default" depends="depends" description="--> Demo for localsolr">
+        <ant antfile="${solr.dir}/build.xml" target="example" dir="${solr.dir}"/>
+    	<copy todir="${localsolr.dir}/libs/solr">
+    		<fileset dir="${solr.dir}/dist" id="id">
+    			<include name="apache-solr-${solr.version}-dev.jar"/>
+    			<include name="apache-solr-common-${solr.version}-dev.jar"/>
+			</fileset>
+    	</copy>
+    	<ant antfile="${locallucene.dir}/build.xml" dir="${locallucene.dir}"/>
+    	<ant antfile="${localsolr.dir}/build.xml" dir="${localsolr.dir}" inheritall="false"/>
+    	
+    	<copy todir="demo/example" >
+    		<fileset dir="${solr.dir}/example">
+    			<include name="**"/>
+    		</fileset>
+    	</copy>
+    	<copy todir="demo/example/solr/lib">
+    		<fileset dir="${locallucene.dir}/dist" id="id">
+    			<include name="*.jar"/>
+    			<exclude name="apache*.jar"/>
+    			<exclude name="lucene*.jar"/>
+			</fileset>
+    		<fileset dir="${locallucene.dir}/lib" id="id">
+    		    <include name="*.jar"/>
+    			<exclude name="apache*.jar"/>
+    			<exclude name="lucene*.jar"/>
+    		</fileset>
+    		<fileset dir="${localsolr.dir}/dist" id="id">
+       			<include name="*.jar"/>	
+    		</fileset>
+    	</copy>
+    	<copy todir="demo/data">
+    		<fileset dir="data">
+    			<include name="**"/>
+    		</fileset>
+    	</copy>
+    	<copy tofile="demo/example/solr/conf/solrconfig.xml.org" file="demo/example/solr/conf/solrconfig.xml"/> 
+    	<copy tofile="demo/example/solr/conf/solrconfig.xml" file="demo/data/solrconfig.xml"/>
+    	<copy tofile="demo/example/solr/conf/schema.xml.org" file="demo/example/solr/conf/schema.xml"/>
+    	<copy tofile="demo/example/solr/conf/schema.xml" file="demo/data/schema.xml"/>
+    </target>
+
+    <!-- - - - - - - - - - - - - - - - - - 
+          target: depends                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="depends">
+    	<delete dir="demo"/>
+    	<mkdir dir="demo"/>
+    	
+    </target>
+
+</project>
