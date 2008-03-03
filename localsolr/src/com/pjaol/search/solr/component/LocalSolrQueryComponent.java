@@ -30,6 +30,7 @@ import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocList;
 import org.apache.solr.search.DocListAndSet;
 import org.apache.solr.search.DocSet;
+import org.apache.solr.search.QParser;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.SolrCache;
 import org.apache.solr.search.SolrIndexSearcher;
@@ -79,10 +80,11 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		this.lngField = (String) initArgs.get("lngField");
 	}
 	
-	@Override
-	public void prepare(SolrQueryRequest req, SolrQueryResponse rsp)
-			throws IOException, ParseException {
-		ResponseBuilder builder = SearchHandler.getResponseBuilder(req);
+	public void prepare(ResponseBuilder builder)
+			throws IOException {
+		
+		SolrQueryRequest req = builder.req;
+	    SolrQueryResponse rsp = builder.rsp;
 		SolrParams params = req.getParams();
 
 		// Set field flags
@@ -153,8 +155,34 @@ public class LocalSolrQueryComponent extends SearchComponent {
 				defaultField, params, req.getSchema()));
 
 		// parse filters
-		List<Query> filters = SolrPluginUtils.parseFilterQueries(req);
-		if (filters != null) {
+		List<Query> filters = builder.getFilters();
+		String[] fqs = req.getParams().getParams(org.apache.solr.common.params.CommonParams.FQ);
+	      if (fqs!=null && fqs.length!=0) {
+	        
+	        if (filters==null) {
+	          filters = new ArrayList<Query>();
+	          builder.setFilters( filters );
+	        }
+	        for (String fq : fqs) {
+	          if (fq != null && fq.trim().length()!=0) {
+	            QParser fqp = null;
+				try {
+					fqp = QParser.getParser(fq, null, req);
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	            try {
+					filters.add(fqp.getQuery());
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	          }
+	        }
+	      }
+		
+		if ( filters != null) {
 			filters.add(dq.getQuery());
 
 		} else {
@@ -167,16 +195,13 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		req.getContext().put(DistanceQuery, dq);
 
-//		Map<String, String> federatedExtras = new HashMap<String, String>();
-//		federatedExtras.put(CommonParams.QT, params.get(CommonParams.QT));
-//		federatedExtras.put(CommonParams.WT, params.get(CommonParams.WT));
-
 	}
 
 	@Override
-	public void process(SolrQueryRequest req, SolrQueryResponse rsp)
+	public void process(ResponseBuilder builder)
 			throws IOException {
-		ResponseBuilder builder = SearchHandler.getResponseBuilder(req);
+		SolrQueryRequest req = builder.req;
+	    SolrQueryResponse rsp = builder.rsp;
 		SolrIndexSearcher searcher = req.getSearcher();
 		
 		SolrParams params = req.getParams();
@@ -276,14 +301,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 				builder.getQuery(), req, rsp);
 
 		Map distances = new HashMap();
-		if (dq.distanceFilter != null) {
-			// if (dsort != null)
-			// dsort.cleanUp();
-
-			// builder.sort = null;
-			distances =  dq.distanceFilter.getDistances();
-
-		}
+	
 		SolrDocumentList sdoclist = mergeResultsDistances(builder.getResults().docList, 
 				distances, searcher, rsp.getReturnFields(),
 				new Double(lat).doubleValue(), 
@@ -322,6 +340,11 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		}
 
+		if (dq.distanceFilter != null) {
+			sort = null;
+			distances = null;
+
+		}
 		
 	}
 
