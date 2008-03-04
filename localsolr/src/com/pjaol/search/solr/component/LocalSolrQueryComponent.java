@@ -83,6 +83,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	public void prepare(ResponseBuilder builder)
 			throws IOException {
 		
+		
 		SolrQueryRequest req = builder.req;
 	    SolrQueryResponse rsp = builder.rsp;
 		SolrParams params = req.getParams();
@@ -218,12 +219,12 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		Filter optimizedDistanceFilter = dq.getFilter(builder.getQuery());
 
+		Map<Integer, Double> distances = null;
+
 		if (distanceCache != null) {
 
 			// Does this region have it's geography cached?
-			Map<Integer, Double> distances = (Map<Integer, Double>) distanceCache
-					.get(dq.distanceFilter);
-
+			distances  = (Map<Integer, Double>) distanceCache.get(dq.distanceFilter);
 			if (distances != null) {
 				dq.distanceFilter.setDistances(distances);
 				cachedDistances = true;
@@ -294,13 +295,18 @@ public class LocalSolrQueryComponent extends SearchComponent {
 										.getFieldFlags());
 			}
 			builder.setResults(results);
+			
+			
 		}
+		
+		if(distances == null)
+			distances = dq.distanceFilter.getDistances();
 
 		// pre-fetch returned documents
 		SolrPluginUtils.optimizePreFetchDocs(builder.getResults().docList,
 				builder.getQuery(), req, rsp);
 
-		Map distances = new HashMap();
+		
 	
 		SolrDocumentList sdoclist = mergeResultsDistances(builder.getResults().docList, 
 				distances, searcher, rsp.getReturnFields(),
@@ -361,10 +367,9 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			int docid = dit.nextDoc();
 			try {
 				SolrDocument sd = luceneDocToSolrDoc(docid, searcher, fields);
-				if(distances != null)
-					
-					sd.addField("geo_distance", distances.get(docid));
-				else {
+				if(distances != null){
+					sd.addField("geo_distance", new String(distances.get(docid).toString()).toString());
+				}else {
 					
 					double docLat = (Double)sd.getFieldValue(latField);
 					double docLong = (Double)sd.getFieldValue(lngField);
