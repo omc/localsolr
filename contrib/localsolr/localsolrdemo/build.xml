@@ -98,7 +98,7 @@
 	<!-- - - - - - - - - - - - - - - - - - 
           target: package                      
          - - - - - - - - - - - - - - - - - -->
-    <target name="package">
+    <target name="package" depends="default">
     	<tar destfile="dist/solr-example_s${solr.version}_ls${localsolr.version}.tgz" 
     		compression="gzip" followsymlinks="false"
     		basedir="demo"></tar>
