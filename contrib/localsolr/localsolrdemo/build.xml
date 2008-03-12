@@ -30,7 +30,7 @@
          ================================= -->
     <target name="build" depends="depends" description="--> Demo for localsolr">
         <ant antfile="${solr.dir}/build.xml" target="example" dir="${solr.dir}"/>
-    	<copy todir="${localsolr.dir}/libs/solr">
+    	<copy todir="${localsolr.dir}/libs/solr" overwrite="true">
     		<fileset dir="${solr.dir}/dist" id="id">
     			<include name="apache-solr-${solr.version}-dev.jar"/>
     			<include name="apache-solr-common-${solr.version}-dev.jar"/>
@@ -39,12 +39,12 @@
     	<ant antfile="${locallucene.dir}/build.xml" dir="${locallucene.dir}"/>
     	<ant antfile="${localsolr.dir}/build.xml" dir="${localsolr.dir}" inheritall="false"/>
     	
-    	<copy todir="${demo.dir}/example" >
+    	<copy todir="${demo.dir}/example" overwrite="true">
     		<fileset dir="${solr.dir}/example">
     			<include name="**"/>
     		</fileset>
     	</copy>
-    	<copy todir="${demo.dir}/example/solr/lib">
+    	<copy todir="${demo.dir}/example/solr/lib" overwrite="true">
     		<fileset dir="${locallucene.dir}/dist" id="id">
     			<include name="*.jar"/>
     			<exclude name="apache*.jar"/>
@@ -59,16 +59,16 @@
        			<include name="*.jar"/>	
     		</fileset>
     	</copy>
-    	<copy todir="${demo.dir}/../data">
+    	<copy todir="${demo.dir}/../data" overwrite="true">
     		<fileset dir="data">
     			<include name="**"/>
     		</fileset>
     	</copy>
-    	<copy tofile="${demo.dir}/example/solr/conf/solrconfig.xml.org" file="${demo.dir}/example/solr/conf/solrconfig.xml"/> 
-    	<copy tofile="${demo.dir}/example/solr/conf/solrconfig.xml" file="${demo.dir}/../data/solrconfig.xml"/>
-    	<copy tofile="${demo.dir}/example/solr/conf/schema.xml.org" file="${demo.dir}/example/solr/conf/schema.xml"/>
-    	<copy tofile="${demo.dir}/example/solr/conf/schema.xml" file="${demo.dir}/../data/schema.xml"/>
-    	<copy toFile="${demo.dir}/example/solr/webapps/localcinema.war" file="${localcinema.dir}/target/localcinema.war" failonerror="false" />
+    	<copy overwrite="true" tofile="${demo.dir}/example/solr/conf/solrconfig.xml.org" file="${demo.dir}/example/solr/conf/solrconfig.xml"/> 
+    	<copy overwrite="true" tofile="${demo.dir}/example/solr/conf/solrconfig.xml" file="${demo.dir}/../data/solrconfig.xml"/>
+    	<copy overwrite="true" tofile="${demo.dir}/example/solr/conf/schema.xml.org" file="${demo.dir}/example/solr/conf/schema.xml"/>
+    	<copy overwrite="true" tofile="${demo.dir}/example/solr/conf/schema.xml" file="${demo.dir}/../data/schema.xml"/>
+    	<copy overwrite="true" toFile="${demo.dir}/example/webapps/localcinema.war" file="${localcinema.dir}/target/localcinema.war" failonerror="false" />
     </target>
 
     <!-- - - - - - - - - - - - - - - - - - 
