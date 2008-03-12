@@ -168,8 +168,8 @@ public class DistanceFilter extends ISerialChainFilter {
 			y = NumberUtils.SortableStr2double(sy);
 			
 			// round off lat / longs if necessary
-			x = DistanceHandler.getPrecision(x, precise);
-			y = DistanceHandler.getPrecision(y, precise);
+//			x = DistanceHandler.getPrecision(x, precise);
+//			y = DistanceHandler.getPrecision(y, precise);
 
 			String ck = new Double(x).toString()+","+new Double(y).toString();
 			Double cachedDistance = cdistance.get(ck);
