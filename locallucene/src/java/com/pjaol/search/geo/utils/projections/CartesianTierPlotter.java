@@ -146,7 +146,7 @@ public class CartesianTierPlotter {
 		double corner = r - Math.sqrt(Math.pow(r, 2) / 2.0d);
 		System.out.println("corner "+ corner);
 		double times = circ / corner;
-		int bestFit =  (int)Math.ceil(log2(times));
+		int bestFit =  (int)Math.ceil(log2(times)) + 1;
 		
 		if (bestFit > 15) {
 			// 15 is the granularity of about 1 mile

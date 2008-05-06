@@ -104,8 +104,8 @@ public class DistanceFilter extends ISerialChainFilter {
 			double y = NumberUtils.SortableStr2double(sy);
 			
 			// round off lat / longs if necessary
-			x = DistanceHandler.getPrecision(x, precise);
-			y = DistanceHandler.getPrecision(y, precise);
+//			x = DistanceHandler.getPrecision(x, precise);
+//			y = DistanceHandler.getPrecision(y, precise);
 			
 			String ck = new Double(x).toString()+","+new Double(y).toString();
 			Double cachedDistance = cdistance.get(ck);
@@ -139,7 +139,6 @@ public class DistanceFilter extends ISerialChainFilter {
 		int size = bits.cardinality();
 		BitSet result = new BitSet(size);
 		
-		setPrecision(size);
 
 		/* create an intermediate cache to avoid recomputing
 	       distances for the same point  */
@@ -180,6 +179,7 @@ public class DistanceFilter extends ISerialChainFilter {
 				
 			} else {
 				d = DistanceUtils.getDistanceMi(lat, lng, x, y);
+				//d = DistanceUtils.getLLMDistance(lat, lng, x, y);
 				cdistance.put(ck, d);
 			}
 			

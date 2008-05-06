@@ -82,7 +82,7 @@ public class CartesianPolyFilter {
 		CartesianTierPlotter ctp = new CartesianTierPlotter(2, projector);
 		int bestFit = ctp.bestFit(miles);
 		
-		log.info("Best Fit is : " + bestFit);
+		log.fine("Best Fit is : " + bestFit);
 		ctp = new CartesianTierPlotter(bestFit, projector);
 		Shape shape = new Shape(ctp.getTierFieldName());
 		
@@ -95,7 +95,7 @@ public class CartesianPolyFilter {
 		double endAt = ctp.getTierBoxId(latY, longY);
 		
 		double tierVert = ctp.getTierVerticalPosDivider();
-		System.out.println(" | "+ beginAt+" | "+ endAt);
+		log.fine(" | "+ beginAt+" | "+ endAt);
 		
 		double startX = beginAt - (beginAt %1);
 		double startY = beginAt - startX ; //should give a whole number
