@@ -1,6 +1,25 @@
 $File: $
 Revision 1.1  2007/09/18 03:51:22  pjaol
+------------------
+Updated com.pjaol.search.solr.component.LocalSolrQueryComponent
+to solrs search component
+Can now be instantiated in solrconfig.xml as
+<!-- local lucene request handler -->
+<searchComponent name="localsolr"     class="com.pjaol.search.solr.component.LocalSolrQueryComponent" />
+<requestHandler name="geo" class="org.apache.solr.handler.component.SearchHandler">
+    <arr name="components">
+      <str>localsolr</str>
+      <str>facet</str>
+      <str>mlt</str>
+      <str>highlight</str>
+      <str>debug</str>
+    </arr>
+</requestHandler>
 
+
+
+
+------------------
 Updated to the latest version of solr
 Removal of com.pjaol.search.solr.LocalResponseWritter
 LocalSolr now uses solrs native query response writers, this eliminates the need

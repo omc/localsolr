@@ -9,10 +9,13 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
@@ -26,10 +29,12 @@ import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.request.SolrQueryResponse;
+import org.apache.solr.schema.SchemaField;
 import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocList;
 import org.apache.solr.search.DocListAndSet;
 import org.apache.solr.search.DocSet;
+import org.apache.solr.search.DocSlice;
 import org.apache.solr.search.QParser;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.SolrCache;
@@ -45,11 +50,12 @@ import com.pjaol.search.solr.LocalSolrRequestHandler;
 import com.pjaol.search.solr.LocalSolrSortParser;
 
 /**
- * {@link LocalSolrQueryComponent}
- * Can be loaded through {@link LocalSolrRequestHandler}
+ * {@link LocalSolrQueryComponent} Can be loaded through
+ * {@link LocalSolrRequestHandler}
+ * 
  * @see LocalSolrRequestHandler
  * @author pjaol
- *
+ * 
  */
 public class LocalSolrQueryComponent extends SearchComponent {
 
@@ -60,15 +66,16 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	private Logger log = Logger.getLogger(getClass().getName());
 	private String latField = "lat";
 	private String lngField = "lng";
-	
+
 	public LocalSolrQueryComponent() {
-		
+
 	}
-	
-	public LocalSolrQueryComponent (String lat, String lng) {
-		
-		if ( lat != null && lng != null){
-			log.info("Setting latField to "+lat +" setting lngField to "+ lng);
+
+	public LocalSolrQueryComponent(String lat, String lng) {
+
+		if (lat != null && lng != null) {
+			log.info("Setting latField to " + lat + " setting lngField to "
+					+ lng);
 			latField = lat;
 			lngField = lng;
 		}
@@ -76,16 +83,22 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 	@Override
 	public void init(NamedList initArgs) {
-		this.latField = (String) initArgs.get("latField");
-		this.lngField = (String) initArgs.get("lngField");
+
+		String lat = (String) initArgs.get("latField");
+		String lng = (String) initArgs.get("lngField");
+
+		if (lat != null && lng != null) {
+			log.info("Setting latField to " + lat + " setting lngField to "
+					+ lng);
+			latField = lat;
+			lngField = lng;
+		}
 	}
-	
-	public void prepare(ResponseBuilder builder)
-			throws IOException {
-		
-		
+
+	public void prepare(ResponseBuilder builder) throws IOException {
+
 		SolrQueryRequest req = builder.req;
-	    SolrQueryResponse rsp = builder.rsp;
+		SolrQueryResponse rsp = builder.rsp;
 		SolrParams params = req.getParams();
 
 		// Set field flags
@@ -114,8 +127,9 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			double dlng = new Double(lng).doubleValue();
 			double dradius = new Double(radius).doubleValue();
 
-			// TODO pull latitude /longitude from configuration 
-			dq = new DistanceQuery(dlat, dlng, dradius, latField, lngField, true);
+			// TODO pull latitude /longitude from configuration
+			dq = new DistanceQuery(dlat, dlng, dradius, latField, lngField,
+					true);
 
 			dsort = new DistanceSortSource(dq.distanceFilter);
 		}
@@ -157,33 +171,34 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		// parse filters
 		List<Query> filters = builder.getFilters();
-		String[] fqs = req.getParams().getParams(org.apache.solr.common.params.CommonParams.FQ);
-	      if (fqs!=null && fqs.length!=0) {
-	        
-	        if (filters==null) {
-	          filters = new ArrayList<Query>();
-	          builder.setFilters( filters );
-	        }
-	        for (String fq : fqs) {
-	          if (fq != null && fq.trim().length()!=0) {
-	            QParser fqp = null;
-				try {
-					fqp = QParser.getParser(fq, null, req);
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+		String[] fqs = req.getParams().getParams(
+				org.apache.solr.common.params.CommonParams.FQ);
+		if (fqs != null && fqs.length != 0) {
+
+			if (filters == null) {
+				filters = new ArrayList<Query>();
+				builder.setFilters(filters);
+			}
+			for (String fq : fqs) {
+				if (fq != null && fq.trim().length() != 0) {
+					QParser fqp = null;
+					try {
+						fqp = QParser.getParser(fq, null, req);
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					try {
+						filters.add(fqp.getQuery());
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
-	            try {
-					filters.add(fqp.getQuery());
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-	          }
-	        }
-	      }
-		
-		if ( filters != null) {
+			}
+		}
+
+		if (filters != null) {
 			filters.add(dq.getQuery());
 
 		} else {
@@ -254,6 +269,40 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			sort = builder.getSortSpec().getSort();
 		}
 
+		
+        // simply return id's
+		String ids = params.get("ids");
+		if (ids != null) {
+			SchemaField idField = req.getSchema().getUniqueKeyField();
+			String[] idArr = ids.split(","); // TODO... handle escaping
+			int[] luceneIds = new int[idArr.length];
+			int docs = 0;
+			for (int i = 0; i < idArr.length; i++) {
+				int id = req.getSearcher().getFirstMatch(
+						new Term(idField.getName(), idField.getType()
+								.toInternal(idArr[i])));
+
+				if (id >= 0)
+					luceneIds[docs++] = id;
+			}
+
+			DocListAndSet res = new DocListAndSet();
+			res.docList = new DocSlice(0, docs, luceneIds, null, docs, 0);
+			builder.setResults(res);
+
+			log.fine("Adding SolrDocumentList from id's " + ids);
+
+			SolrDocumentList sdoclist = mergeResultsDistances(builder
+					.getResults().docList, null, searcher, rsp
+					.getReturnFields(), new Double(lat).doubleValue(),
+					new Double(lng).doubleValue());
+
+			rsp.add("response", sdoclist);
+			return;
+		}
+		
+		
+		
 		if (builder.isNeedDocSet()) {
 
 			if (!cachedDistances) {
@@ -321,31 +370,36 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		// Part of the MainQueryPhase response
 
 		String sortStr = req.getParams().get(CommonParams.SORT);
-		String fsv = req.getParams().get("fsv"); // ResponseBuilder.FIELD_SORT_VALUES);
-		if ((fsv != null) && (sortStr != null)
-				&& (sortStr.startsWith("geo_distance"))) {
+		boolean fsv = req.getParams().getBool(ResponseBuilder.FIELD_SORT_VALUES,false);
+		if(fsv ) {
+			// provide a sort_value in the response
+			// do i really need a comparator if there is a
+			// fieldable object with an internal - external representation ?
+			SortField[] sortFields = sort==null ? new SortField[]{SortField.FIELD_SCORE} : sort.getSort();
+			ScoreDoc sd = new ScoreDoc(0,1.0f); // won't work for comparators that look
+										// at the score
+			NamedList sortVals = new NamedList();
 
-			NamedList responseSortFields = new NamedList();
+			for (SortField sortField: sortFields) {
+				int type = sortField.getType();
+				if (type==SortField.SCORE || type==SortField.DOC) continue;
 
-			DocIterator it = builder.getResults().docList.iterator();
-			while (it.hasNext()) {
-				NamedList sortFields = new NamedList();
-				int docId = it.nextDoc();
-				Document doc = req.getSearcher().doc(docId);
+				String fieldname = sortField.getField();
 
-				String docUniqKey = SolrCore.getSolrCore().getSchema().getUniqueKeyField(doc).stringValue();
-						;
-
-				Double distance = (Double) dq.distanceFilter.getDistance(docId);
-				sortFields.add("geo_distance", distance);
-
-				responseSortFields.add(docUniqKey, sortFields);
+				DocList docList = builder.getResults().docList;
+				ArrayList<Object> vals = new ArrayList<Object>(docList.size());
+				DocIterator it = builder.getResults().docList.iterator();
+				int docPosition = 0;
+				while(it.hasNext()) {
+					sd.doc = it.nextDoc();
+					vals.add(sdoclist.get(docPosition).getFieldValue(fieldname));
+					docPosition++;
+				}
+				sortVals.add(fieldname, vals);
 			}
-
-			rsp.add("response_sort_fields", responseSortFields);
-
+			rsp.add("sort_values", sortVals);
 		}
-
+		
 		if (dq.distanceFilter != null) {
 			sort = null;
 			distances = null;
@@ -354,61 +408,62 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		
 	}
 
-	
-	private SolrDocumentList mergeResultsDistances (DocList docs, Map distances, SolrIndexSearcher searcher, Set<String> fields, double latitude, double longitude){
+	private SolrDocumentList mergeResultsDistances(DocList docs, Map distances,
+			SolrIndexSearcher searcher, Set<String> fields, double latitude,
+			double longitude) {
 		SolrDocumentList sdoclist = new SolrDocumentList();
 		sdoclist.setNumFound(docs.matches());
 		sdoclist.setMaxScore(docs.maxScore());
 		sdoclist.setStart(docs.offset());
-		
+
 		DocIterator dit = docs.iterator();
 
-		while(dit.hasNext()){
+		while (dit.hasNext()) {
 			int docid = dit.nextDoc();
 			try {
 				SolrDocument sd = luceneDocToSolrDoc(docid, searcher, fields);
-				if(distances != null){
-					sd.addField("geo_distance", new String(distances.get(docid).toString()).toString());
-				}else {
-					
-					double docLat = (Double)sd.getFieldValue(latField);
-					double docLong = (Double)sd.getFieldValue(lngField);
-					double distance =DistanceUtils.getDistanceMi(docLat, docLong, latitude, longitude);
-					
-					sd.addField("geo_distance", distance);	
+				if (distances != null) {
+					sd.addField("geo_distance", new String(distances.get(docid)
+							.toString()).toString());
+				} else {
+
+					double docLat = (Double) sd.getFieldValue(latField);
+					double docLong = (Double) sd.getFieldValue(lngField);
+					double distance = DistanceUtils.getDistanceMi(docLat,
+							docLong, latitude, longitude);
+
+					sd.addField("geo_distance", distance);
 				}
-				
+
 				// this may be removed if XMLWriter gets patched to
 				// include score from doc iterator in solrdoclist
-				if(docs.hasScores()){
+				if (docs.hasScores()) {
 					sd.addField("score", dit.score());
 				} else {
 					sd.addField("score", 0.0f);
 				}
 				sdoclist.add(sd);
-				
-				
+
 			} catch (IOException e) {
 				// TODO possible slip or should we fail?
 				e.printStackTrace();
 			}
-			
+
 		}
-		
-		
+
 		return sdoclist;
 	}
-	
-	
-	public SolrDocument luceneDocToSolrDoc (int docid, SolrIndexSearcher searcher, Set fields) throws IOException{
+
+	public SolrDocument luceneDocToSolrDoc(int docid,
+			SolrIndexSearcher searcher, Set fields) throws IOException {
 		Document luceneDoc = searcher.doc(docid, fields);
-		
+
 		SolrDocument sdoc = new SolrDocument();
 		DocumentBuilder db = new DocumentBuilder(searcher.getSchema());
 		sdoc = db.loadStoredFields(sdoc, luceneDoc);
 		return sdoc;
 	}
-	
+
 	/*
 	 * Solr InfoBean
 	 */
