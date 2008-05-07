@@ -29,6 +29,7 @@ import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.request.SolrQueryResponse;
+import org.apache.solr.schema.FieldType;
 import org.apache.solr.schema.SchemaField;
 import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocList;
@@ -41,6 +42,7 @@ import org.apache.solr.search.SolrCache;
 import org.apache.solr.search.SolrIndexSearcher;
 import org.apache.solr.search.SortSpec;
 import org.apache.solr.update.DocumentBuilder;
+import org.apache.solr.util.NumberUtils;
 import org.apache.solr.util.SolrPluginUtils;
 
 import com.pjaol.search.geo.utils.DistanceQuery;
@@ -371,6 +373,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		String sortStr = req.getParams().get(CommonParams.SORT);
 		boolean fsv = req.getParams().getBool(ResponseBuilder.FIELD_SORT_VALUES,false);
+		
+		// field sort values used for sharding / distributed searching
 		if(fsv ) {
 			// provide a sort_value in the response
 			// do i really need a comparator if there is a
@@ -385,14 +389,22 @@ public class LocalSolrQueryComponent extends SearchComponent {
 				if (type==SortField.SCORE || type==SortField.DOC) continue;
 
 				String fieldname = sortField.getField();
-
+				FieldType ft = fieldname==null ? null : req.getSchema().getFieldTypeNoEx(fieldname);
+				
 				DocList docList = builder.getResults().docList;
 				ArrayList<Object> vals = new ArrayList<Object>(docList.size());
 				DocIterator it = builder.getResults().docList.iterator();
+				
 				int docPosition = 0;
 				while(it.hasNext()) {
 					sd.doc = it.nextDoc();
-					vals.add(sdoclist.get(docPosition).getFieldValue(fieldname));
+					if (type != SortField.STRING ){
+						// assume this is only used for shard-ing
+						// thus field value should be internal representation of the object
+						vals.add(ft.toInternal((String) sdoclist.get(docPosition).getFieldValue(fieldname)));
+					}else {
+						vals.add(sdoclist.get(docPosition).getFieldValue(fieldname));
+					}
 					docPosition++;
 				}
 				sortVals.add(fieldname, vals);
