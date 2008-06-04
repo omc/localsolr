@@ -100,7 +100,7 @@ public class TestDistance extends TestCase{
 		addPoint(writer,"Iota Club and Cafe",38.8890000,-77.0923000);
 		addPoint(writer,"Hilton Washington Embassy Row",38.9103000,-77.0451000);
 		addPoint(writer,"HorseFeathers, Bar & Grill", 39.01220000000001, -77.3942);
-		
+		writer.flush();
 	}
 	
 	public void testRange() throws IOException, InvalidGeoException {
@@ -143,8 +143,8 @@ public class TestDistance extends TestCase{
 		System.out.println("Distance Filter filtered: " + distances.size());
 		System.out.println("Results: " + results);
 		System.out.println("=============================");
-		assertEquals(6, distances.size());
-		assertEquals(6, results);
+		assertEquals(7, distances.size());
+		assertEquals(7, results);
 		
 		for(int i =0 ; i < results; i++){
 			Document d = hits.doc(i);
@@ -186,6 +186,7 @@ public class TestDistance extends TestCase{
 		DistanceQuery dq2 = new DistanceQuery(lat, lng, miles, latField, lngField, false);
 
 		/* ensure that they hash to the same code, which will cause a cache hit in solr */
+		System.out.println("hash differences?");
 		assertEquals(dq1.getQuery().hashCode(), dq2.getQuery().hashCode());
 		
 		/* ensure that changing the radius makes a different hash code, creating a cache miss in solr */

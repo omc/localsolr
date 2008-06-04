@@ -62,7 +62,7 @@
           target: test              
          ================================= -->
     <target name="test" description="--> perform unit tests">
-    	<junit showoutput="true" haltonerror="true" printsummary="true">
+    	<junit showoutput="true" haltonerror="true" printsummary="true" >
     		<classpath refid="lib.path"/>
     		<classpath path="${build.dir}"/>
     		<test name="com.pjaol.search.test.UnitTests.TestDistance" />

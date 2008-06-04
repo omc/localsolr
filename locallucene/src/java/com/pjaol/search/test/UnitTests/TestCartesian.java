@@ -36,6 +36,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.solr.schema.FieldType;
 import org.apache.solr.util.NumberUtils;
 import org.apache.lucene.search.function.CustomScoreQuery;
 import org.apache.lucene.search.function.FieldScoreQuery;
@@ -142,7 +143,7 @@ public class TestCartesian extends TestCase{
 		addPoint(writer,"Iota Club and Cafe",38.8890000,-77.0923000);
 		addPoint(writer,"Hilton Washington Embassy Row",38.9103000,-77.0451000);
 		addPoint(writer,"HorseFeathers, Bar & Grill", 39.01220000000001, -77.3942);
-		
+		writer.flush();
 	}
 	
 	public void testRange() throws IOException, InvalidGeoException {
@@ -161,6 +162,9 @@ public class TestCartesian extends TestCase{
 		CustomScoreQuery customScore = new CustomScoreQuery(tq,fsQuery){
 			
 			public float customScore(int doc, float subQueryScore, float valSrcScore){
+				System.out.println(doc);
+				if (dq.distanceFilter.getDistance(doc) == null)
+					return 0;
 				
 				double distance = (double)dq.distanceFilter.getDistance(doc);
 				// boost score shouldn't exceed 1
@@ -198,11 +202,11 @@ public class TestCartesian extends TestCase{
 		System.out.println("Distance Filter filtered: " + distances.size());
 		System.out.println("Results: " + results);
 		System.out.println("=============================");
-		System.out.println("Distances should be 10 "+ distances.size());
-		System.out.println("Results should be 6 "+ results);
+		System.out.println("Distances should be 14 "+ distances.size());
+		System.out.println("Results should be 7 "+ results);
 
-		assertEquals(10, distances.size());
-		assertEquals(6, results);
+		assertEquals(14, distances.size());
+		assertEquals(7, results);
 		
 		for(int i =0 ; i < results; i++){
 			Document d = hits.doc(i);
