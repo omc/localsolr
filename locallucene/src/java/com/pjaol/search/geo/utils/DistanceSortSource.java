@@ -80,7 +80,7 @@ public class DistanceSortSource implements SortComparatorSource {
 		}
 
 		public int sortType() {
-			return SortField.FLOAT;
+			return SortField.DOUBLE;
 		}
 
 		public Comparable sortValue(ScoreDoc iDoc) {
