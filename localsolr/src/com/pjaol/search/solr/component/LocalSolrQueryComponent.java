@@ -2,7 +2,6 @@ package com.pjaol.search.solr.component;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,8 +22,6 @@ import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.StrUtils;
-import org.apache.solr.core.SolrCore;
-import org.apache.solr.handler.component.SearchHandler;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.SolrQueryRequest;
@@ -42,7 +39,6 @@ import org.apache.solr.search.SolrCache;
 import org.apache.solr.search.SolrIndexSearcher;
 import org.apache.solr.search.SortSpec;
 import org.apache.solr.update.DocumentBuilder;
-import org.apache.solr.util.NumberUtils;
 import org.apache.solr.util.SolrPluginUtils;
 
 import com.pjaol.search.geo.utils.DistanceQuery;
@@ -256,21 +252,6 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			}
 
 		}
-
-		if (!cachedDistances) {
-			// Run the optimized geography filter
-			f = searcher.convertFilter(optimizedDistanceFilter);
-			if (distanceCache != null) {
-				distanceCache.put(optimizedDistanceFilter, dq.distanceFilter
-						.getDistances());
-			}
-		}
-
-		Sort sort = null;
-		if (builder.getSortSpec() != null) {
-			sort = builder.getSortSpec().getSort();
-		}
-
 		
         // simply return id's
 		String ids = params.get("ids");
@@ -301,6 +282,22 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 			rsp.add("response", sdoclist);
 			return;
+		}
+		
+		
+		
+		if (!cachedDistances) {
+			// Run the optimized geography filter
+			f = searcher.convertFilter(optimizedDistanceFilter);
+			if (distanceCache != null) {
+				distanceCache.put(optimizedDistanceFilter, dq.distanceFilter
+						.getDistances());
+			}
+		}
+
+		Sort sort = null;
+		if (builder.getSortSpec() != null) {
+			sort = builder.getSortSpec().getSort();
 		}
 		
 		
@@ -398,10 +395,17 @@ public class LocalSolrQueryComponent extends SearchComponent {
 				int docPosition = 0;
 				while(it.hasNext()) {
 					sd.doc = it.nextDoc();
+				
 					if (type != SortField.STRING ){
 						// assume this is only used for shard-ing
 						// thus field value should be internal representation of the object
-						vals.add(ft.toInternal((String) sdoclist.get(docPosition).getFieldValue(fieldname)));
+				
+						if (type == SortField.CUSTOM){
+							// assume it's a double, as there's a bug in sdouble type
+							vals.add(ft.toInternal( new Double((Double)sdoclist.get(docPosition).getFieldValue(fieldname)).toString()));
+						}else {
+							vals.add(ft.toInternal((String) sdoclist.get(docPosition).getFieldValue(fieldname)));
+						}
 					}else {
 						vals.add(sdoclist.get(docPosition).getFieldValue(fieldname));
 					}
