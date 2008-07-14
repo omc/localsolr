@@ -400,7 +400,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 						// assume this is only used for shard-ing
 						// thus field value should be internal representation of the object
 				
-						if (type == SortField.CUSTOM){
+						if (type == SortField.CUSTOM && ( !fieldname.equals("geo_distance"))){
 							// assume it's a double, as there's a bug in sdouble type
 							vals.add(ft.toInternal( new Double((Double)sdoclist.get(docPosition).getFieldValue(fieldname)).toString()));
 						}else {
