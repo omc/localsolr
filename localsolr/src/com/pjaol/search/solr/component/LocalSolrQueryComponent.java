@@ -212,17 +212,15 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	}
 
 	@Override
-	public void process(ResponseBuilder builder)
-			throws IOException {
+	public void process(ResponseBuilder builder) throws IOException {
 		SolrQueryRequest req = builder.req;
-	    SolrQueryResponse rsp = builder.rsp;
+		SolrQueryResponse rsp = builder.rsp;
 		SolrIndexSearcher searcher = req.getSearcher();
-		
+
 		SolrParams params = req.getParams();
 		String lat = params.get("lat");
 		String lng = params.get("long");
-		
-		
+
 		SolrCache distanceCache = searcher.getCache(DistanceCache);
 
 		DocSet f = null;
@@ -237,7 +235,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		if (distanceCache != null) {
 
 			// Does this region have it's geography cached?
-			distances  = (Map<Integer, Double>) distanceCache.get(dq.distanceFilter);
+			distances = (Map<Integer, Double>) distanceCache
+					.get(dq.distanceFilter);
 			if (distances != null) {
 				dq.distanceFilter.setDistances(distances);
 				cachedDistances = true;
@@ -252,8 +251,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			}
 
 		}
-		
-        // simply return id's
+
+		// simply return id's
 		String ids = params.get("ids");
 		if (ids != null) {
 			SchemaField idField = req.getSchema().getUniqueKeyField();
@@ -283,9 +282,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			rsp.add("response", sdoclist);
 			return;
 		}
-		
-		
-		
+
 		if (!cachedDistances) {
 			// Run the optimized geography filter
 			f = searcher.convertFilter(optimizedDistanceFilter);
@@ -299,9 +296,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		if (builder.getSortSpec() != null) {
 			sort = builder.getSortSpec().getSort();
 		}
-		
-		
-		
+
 		if (builder.isNeedDocSet()) {
 
 			if (!cachedDistances) {
@@ -330,7 +325,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			DocListAndSet results = new DocListAndSet();
 			if (!cachedDistances) {
 				log.fine("Using reqular...");
-				
+
 				results.docList = searcher.getDocList(builder.getQuery(), f,
 						sort, params.getInt(CommonParams.START, 0), params
 								.getInt(CommonParams.ROWS, 10));
@@ -343,71 +338,84 @@ public class LocalSolrQueryComponent extends SearchComponent {
 										.getFieldFlags());
 			}
 			builder.setResults(results);
-			
-			
+
 		}
-		
-		if(distances == null)
+
+		if (distances == null)
 			distances = dq.distanceFilter.getDistances();
 
 		// pre-fetch returned documents
 		SolrPluginUtils.optimizePreFetchDocs(builder.getResults().docList,
 				builder.getQuery(), req, rsp);
 
-		
-	
-		SolrDocumentList sdoclist = mergeResultsDistances(builder.getResults().docList, 
-				distances, searcher, rsp.getReturnFields(),
-				new Double(lat).doubleValue(), 
+		SolrDocumentList sdoclist = mergeResultsDistances(
+				builder.getResults().docList, distances, searcher, rsp
+						.getReturnFields(), new Double(lat).doubleValue(),
 				new Double(lng).doubleValue());
 
-		log.finer("Adding SolrDocumentList "+ sdoclist.size());
+		log.finer("Adding SolrDocumentList " + sdoclist.size());
 		rsp.add("response", sdoclist);
-
 
 		// Add distance sorted response for merging later...
 		// Part of the MainQueryPhase response
 
 		String sortStr = req.getParams().get(CommonParams.SORT);
-		boolean fsv = req.getParams().getBool(ResponseBuilder.FIELD_SORT_VALUES,false);
-		
+		boolean fsv = req.getParams().getBool(
+				ResponseBuilder.FIELD_SORT_VALUES, false);
+
 		// field sort values used for sharding / distributed searching
-		if(fsv ) {
+		if (fsv) {
 			// provide a sort_value in the response
 			// do i really need a comparator if there is a
 			// fieldable object with an internal - external representation ?
-			SortField[] sortFields = sort==null ? new SortField[]{SortField.FIELD_SCORE} : sort.getSort();
-			ScoreDoc sd = new ScoreDoc(0,1.0f); // won't work for comparators that look
-										// at the score
+			SortField[] sortFields = sort == null ? new SortField[] { SortField.FIELD_SCORE }
+					: sort.getSort();
+			ScoreDoc sd = new ScoreDoc(0, 1.0f); // won't work for
+													// comparators that look
+			// at the score
 			NamedList sortVals = new NamedList();
 
-			for (SortField sortField: sortFields) {
+			for (SortField sortField : sortFields) {
 				int type = sortField.getType();
-				if (type==SortField.SCORE || type==SortField.DOC) continue;
+				if (type == SortField.SCORE || type == SortField.DOC)
+					continue;
 
 				String fieldname = sortField.getField();
-				FieldType ft = fieldname==null ? null : req.getSchema().getFieldTypeNoEx(fieldname);
-				
+				FieldType ft = fieldname == null ? null : req.getSchema()
+						.getFieldTypeNoEx(fieldname);
+
 				DocList docList = builder.getResults().docList;
 				ArrayList<Object> vals = new ArrayList<Object>(docList.size());
 				DocIterator it = builder.getResults().docList.iterator();
-				
+
 				int docPosition = 0;
-				while(it.hasNext()) {
+				while (it.hasNext()) {
 					sd.doc = it.nextDoc();
-				
-					if (type != SortField.STRING ){
+
+					if (type != SortField.STRING) {
 						// assume this is only used for shard-ing
-						// thus field value should be internal representation of the object
-				
-						if (type == SortField.CUSTOM && ( !fieldname.equals("geo_distance"))){
-							// assume it's a double, as there's a bug in sdouble type
-							vals.add(ft.toInternal( new Double((Double)sdoclist.get(docPosition).getFieldValue(fieldname)).toString()));
-						}else {
-							vals.add(ft.toInternal((String) sdoclist.get(docPosition).getFieldValue(fieldname)));
+						// thus field value should be internal representation of
+						// the object
+						try {
+							if (type == SortField.CUSTOM
+									&& (!fieldname.equals("geo_distance"))) {
+								// assume it's a double, as there's a bug in
+								// sdouble type
+								vals.add(ft.toInternal(new Double(
+										(Double) sdoclist.get(docPosition)
+												.getFieldValue(fieldname))
+										.toString()));
+							} else {
+								vals.add(ft.toInternal((String) sdoclist.get(
+										docPosition).getFieldValue(fieldname)));
+							}
+						} catch (Exception e) {
+							vals.add(sdoclist.get(docPosition).getFieldValue(
+									fieldname));
 						}
-					}else {
-						vals.add(sdoclist.get(docPosition).getFieldValue(fieldname));
+					} else {
+						vals.add(sdoclist.get(docPosition).getFieldValue(
+								fieldname));
 					}
 					docPosition++;
 				}
@@ -415,13 +423,13 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			}
 			rsp.add("sort_values", sortVals);
 		}
-		
+
 		if (dq.distanceFilter != null) {
 			sort = null;
 			distances = null;
 
 		}
-		
+
 	}
 
 	private SolrDocumentList mergeResultsDistances(DocList docs, Map distances,
