@@ -35,7 +35,6 @@ import org.apache.solr.search.DocSet;
 import org.apache.solr.search.DocSlice;
 import org.apache.solr.search.QParser;
 import org.apache.solr.search.QueryParsing;
-import org.apache.solr.search.SolrCache;
 import org.apache.solr.search.SolrIndexSearcher;
 import org.apache.solr.search.SortSpec;
 import org.apache.solr.update.DocumentBuilder;
@@ -58,8 +57,6 @@ import com.pjaol.search.solr.LocalSolrSortParser;
 public class LocalSolrQueryComponent extends SearchComponent {
 
 	private String DistanceQuery = "DistanceQuery";
-
-	private String DistanceCache = "distanceCache";
 
 	private Logger log = Logger.getLogger(getClass().getName());
 	private String latField = "lat";
@@ -115,8 +112,6 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		String radius = params.get("radius");
 
-		DistanceSortSource dsort = null;
-
 		DistanceQuery dq = null;
 
 		if (lat != null && lng != null && radius != null) {
@@ -128,37 +123,6 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			// TODO pull latitude /longitude from configuration
 			dq = new DistanceQuery(dlat, dlng, dradius, latField, lngField,
 					true);
-
-			dsort = new DistanceSortSource(dq.distanceFilter);
-		}
-
-		// Parse sort
-		String sortStr = params.get(CommonParams.SORT);
-		if (sortStr == null) {
-			// TODO? should we disable the ';' syntax with config?
-			// legacy mode, where sreq is query;sort
-			List<String> commands = StrUtils.splitSmart(builder
-					.getQueryString(), ';');
-			if (commands.size() == 2) {
-				// TODO? add a deprication warning to the response header
-				builder.setQueryString(commands.get(0));
-				sortStr = commands.get(1);
-			} else if (commands.size() == 1) {
-				// This is need to support the case where someone sends:
-				// "q=query;"
-				builder.setQueryString(commands.get(0));
-			} else if (commands.size() > 2) {
-				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
-						"If you want to use multiple ';' in the query, use the 'sort' param.");
-			}
-		}
-
-		if (sortStr != null) {
-			SortSpec lss = new LocalSolrSortParser().parseSort(sortStr, req
-					.getSchema(), dsort);
-			if (lss != null) {
-				builder.setSortSpec(lss);
-			}
 
 		}
 
@@ -221,36 +185,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		String lat = params.get("lat");
 		String lng = params.get("long");
 
-		SolrCache distanceCache = searcher.getCache(DistanceCache);
-
+		
 		DocSet f = null;
-		DistanceQuery dq = (DistanceQuery) req.getContext().get(DistanceQuery);
-
-		boolean cachedDistances = false;
-
-		Filter optimizedDistanceFilter = dq.getFilter(builder.getQuery());
-
-		Map<Integer, Double> distances = null;
-
-		if (distanceCache != null) {
-
-			// Does this region have it's geography cached?
-			distances = (Map<Integer, Double>) distanceCache
-					.get(dq.distanceFilter);
-			if (distances != null) {
-				dq.distanceFilter.setDistances(distances);
-				cachedDistances = true;
-			} else {
-				// try and get cache for a query based geography filter.
-				distances = (Map<Integer, Double>) distanceCache
-						.get(optimizedDistanceFilter);
-				if (distances != null) {
-					dq.distanceFilter.setDistances(distances);
-					cachedDistances = true;
-				}
-			}
-
-		}
 
 		// simply return id's
 		String ids = params.get("ids");
@@ -283,13 +219,46 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			return;
 		}
 
-		if (!cachedDistances) {
-			// Run the optimized geography filter
-			f = searcher.convertFilter(optimizedDistanceFilter);
-			if (distanceCache != null) {
-				distanceCache.put(optimizedDistanceFilter, dq.distanceFilter
-						.getDistances());
+		DistanceQuery dq = (DistanceQuery) req.getContext().get(DistanceQuery);
+
+		Filter optimizedDistanceFilter = dq.getFilter(builder.getQuery());
+
+		Map<Integer, Double> distances = null;
+
+		// Run the optimized geography filter
+		f = searcher.convertFilter(optimizedDistanceFilter);
+		
+		DistanceSortSource dsort = null;
+		dsort = new DistanceSortSource(dq.distanceFilter);
+
+		// Parse sort
+		String sortStr = params.get(CommonParams.SORT);
+		if (sortStr == null) {
+			// TODO? should we disable the ';' syntax with config?
+			// legacy mode, where sreq is query;sort
+			List<String> commands = StrUtils.splitSmart(builder
+					.getQueryString(), ';');
+			if (commands.size() == 2) {
+				// TODO? add a deprication warning to the response header
+				builder.setQueryString(commands.get(0));
+				sortStr = commands.get(1);
+			} else if (commands.size() == 1) {
+				// This is need to support the case where someone sends:
+				// "q=query;"
+				builder.setQueryString(commands.get(0));
+			} else if (commands.size() > 2) {
+				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
+						"If you want to use multiple ';' in the query, use the 'sort' param.");
 			}
+		}
+
+		if (sortStr != null) {
+			SortSpec lss = new LocalSolrSortParser().parseSort(sortStr, req
+					.getSchema(), dsort);
+			if (lss != null) {
+				builder.setSortSpec(lss);
+			}
+
 		}
 
 		Sort sort = null;
@@ -299,44 +268,24 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		if (builder.isNeedDocSet()) {
 
-			if (!cachedDistances) {
-				// use a standard query
-				log.fine("Standard query...");
+			// use a standard query
+			log.fine("Standard query...");
 
-				builder
-						.setResults(searcher
-								.getDocListAndSet(builder.getQuery(), f, sort,
-										params.getInt(CommonParams.START, 0),
-										params.getInt(CommonParams.ROWS, 10),
-										builder.getFieldFlags()));
-			} else {
-				// use a cached query
-				log.fine("Cached query....");
-				builder.setResults(searcher
-						.getDocListAndSet(builder.getQuery(), dq.getQuery(),
-								sort, params.getInt(CommonParams.START, 0),
-								params.getInt(CommonParams.ROWS, 10), builder
-										.getFieldFlags()));
-			}
+			builder.setResults(searcher.getDocListAndSet(builder.getQuery(), f,
+					sort, params.getInt(CommonParams.START, 0), params.getInt(
+							CommonParams.ROWS, 10), builder.getFieldFlags()));
+			
 
 		} else {
 
 			log.fine("DocList query....");
 			DocListAndSet results = new DocListAndSet();
-			if (!cachedDistances) {
-				log.fine("Using reqular...");
 
-				results.docList = searcher.getDocList(builder.getQuery(), f,
-						sort, params.getInt(CommonParams.START, 0), params
-								.getInt(CommonParams.ROWS, 10));
-			} else {
-				log.fine("Using cached.....");
-				results.docList = searcher
-						.getDocList(builder.getQuery(), builder.getFilters(),
-								sort, params.getInt(CommonParams.START, 0),
-								params.getInt(CommonParams.ROWS, 10), builder
-										.getFieldFlags());
-			}
+			log.fine("Using reqular...");
+
+			results.docList = searcher.getDocList(builder.getQuery(), f, sort,
+					params.getInt(CommonParams.START, 0), params.getInt(
+							CommonParams.ROWS, 10));
 			builder.setResults(results);
 
 		}
@@ -359,7 +308,6 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		// Add distance sorted response for merging later...
 		// Part of the MainQueryPhase response
 
-		String sortStr = req.getParams().get(CommonParams.SORT);
 		boolean fsv = req.getParams().getBool(
 				ResponseBuilder.FIELD_SORT_VALUES, false);
 
@@ -371,7 +319,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			SortField[] sortFields = sort == null ? new SortField[] { SortField.FIELD_SCORE }
 					: sort.getSort();
 			ScoreDoc sd = new ScoreDoc(0, 1.0f); // won't work for
-													// comparators that look
+			// comparators that look
 			// at the score
 			NamedList sortVals = new NamedList();
 
@@ -425,8 +373,11 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		}
 
 		if (dq.distanceFilter != null) {
+			dsort.cleanUp();
 			sort = null;
 			distances = null;
+			optimizedDistanceFilter = null;
+			f = null;
 
 		}
 
