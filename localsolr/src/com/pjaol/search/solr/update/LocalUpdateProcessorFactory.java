@@ -63,10 +63,10 @@ public class LocalUpdateProcessorFactory extends UpdateRequestProcessorFactory {
 	int cartesianEndTier = 14;
 
 	@Override
-	public void init(SolrCore core, Node node) {
-		super.init(core, node);
-		if (node != null) {
-			NamedList<Object> args = DOMUtil.childNodesToNamedList(node);
+	public void init(NamedList args) {
+		super.init(args);
+		if (args != null) {
+			//NamedList<Object> args = DOMUtil.childNodesToNamedList(node);
 			SolrParams params = SolrParams.toSolrParams(args);
 			latField = params.get("latField", latField);
 			lngField = params.get("lngField", lngField);
@@ -79,8 +79,11 @@ public class LocalUpdateProcessorFactory extends UpdateRequestProcessorFactory {
 	public UpdateRequestProcessor getInstance(SolrQueryRequest req,
 			SolrQueryResponse rsp, UpdateRequestProcessor next) {
 
-		return new LocalUpdaterProcessor(latField, lngField,
+		LocalUpdaterProcessor lup = new LocalUpdaterProcessor(next);
+		lup.setup(latField, lngField,
 				cartesianStartTier, cartesianEndTier, next);
+		
+		return lup;
 	}
 }
 
@@ -96,7 +99,11 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 
 	List<CartesianTierPlotter> plotters = new LinkedList<CartesianTierPlotter>();
 
-	public LocalUpdaterProcessor(String latField, String lngField,
+	public LocalUpdaterProcessor (UpdateRequestProcessor next){
+		super(next);
+	}
+	
+	public void setup(String latField, String lngField,
 			int startTier, int endTier, UpdateRequestProcessor next) {
 
 		this.latField = latField;

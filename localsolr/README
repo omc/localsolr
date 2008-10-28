@@ -46,20 +46,18 @@ directory.
 Edit solr/conf/solrconfig.xml
 
 ** Configure Indexer
-  <updateRequestProcessor>
-    <factory name="standard" class="solr.ChainedUpdateProcessorFactory" default="true">
-      <chain class="com.pjaol.search.solr.update.LocalUpdateProcessorFactory">
+  <updateRequestProcessorChain>
+      <processor class="com.pjaol.search.solr.update.LocalUpdateProcessorFactory">
         <str name="latField">lat</str>
         <str name="lngField">lng</str>
         <int name="startTier">9</int>
         <int name="endTier">17</int>
-      </chain>
-      <chain class="solr.LogUpdateProcessorFactory" >
-       <!-- <int name="maxNumToLog">100</int> -->
-      </chain>
-      <chain class="solr.RunUpdateProcessorFactory" />
-    </factory>
-  </updateRequestProcessor>
+      </processor>
+   <processor class="solr.RunUpdateProcessorFactory" />    
+   <processor class="solr.LogUpdateProcessorFactory" /> 
+  </updateRequestProcessorChain>
+  
+  
   
 ** Configure the query handler (query template)
 <!-- local lucene request handler -->

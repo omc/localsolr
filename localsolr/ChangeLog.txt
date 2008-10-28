@@ -1,6 +1,22 @@
 $File: $
 Revision 1.1  2007/09/18 03:51:22  pjaol
 ------------------
+Update the updateChainRequestProcessor to the solr-1.3 release
+Change the readme to reflect conf change of processor to
+  <updateRequestProcessorChain>
+      <processor class="com.pjaol.search.solr.update.LocalUpdateProcessorFactory">
+        <str name="latField">lat</str>
+        <str name="lngField">lng</str>
+        <int name="startTier">9</int>
+        <int name="endTier">17</int>
+      </processor>
+   <processor class="solr.RunUpdateProcessorFactory" />    
+   <processor class="solr.LogUpdateProcessorFactory" /> 
+  </updateRequestProcessorChain>
+  
+  
+
+------------------
 Updated com.pjaol.search.solr.component.LocalSolrQueryComponent
 to solrs search component
 Can now be instantiated in solrconfig.xml as
