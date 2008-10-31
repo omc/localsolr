@@ -206,6 +206,7 @@
 <!-- local lucene field types -->
    <field name="lat" type="sdouble" indexed="true" stored="true"/>
    <field name="lng" type="sdouble" indexed="true" stored="true"/>
+   <field name="geo_distance" type="sdouble"/>
     <dynamicField name="_local*" type="sdouble" indexed="true" stored="true"/>
  </fields>
 
