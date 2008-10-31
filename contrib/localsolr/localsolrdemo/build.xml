@@ -29,7 +29,7 @@
           target: default              
          ================================= -->
     <target name="build" depends="depends" description="--> Demo for localsolr">
-        <ant antfile="${solr.dir}/build.xml" target="example" dir="${solr.dir}"/>
+        <ant antfile="${solr.dir}/build.xml" target="example" inheritAll="false"/>
     	<copy todir="${localsolr.dir}/libs/solr" overwrite="true">
     		<fileset dir="${solr.dir}/dist" id="id">
     			<include name="apache-solr-${solr.version}-dev.jar"/>
