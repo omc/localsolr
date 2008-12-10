@@ -1,5 +1,6 @@
 $File: $
-Revision 1.1  2007/09/18 03:51:22  pjaol
+------------------
+Updated to solr-1.4.0-dev
 ------------------
 Update the updateChainRequestProcessor to the solr-1.3 release
 Change the readme to reflect conf change of processor to
