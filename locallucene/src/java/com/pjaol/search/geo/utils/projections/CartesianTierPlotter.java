@@ -136,7 +136,7 @@ public class CartesianTierPlotter {
 	 * @param longitude
 	 * @return
 	 */
-	public int bestFit(int miles){
+	public int bestFit(double miles){
 		
 		//28,892 a rough circumference of the earth
 		int circ = 28892;
@@ -148,7 +148,7 @@ public class CartesianTierPlotter {
 		double times = circ / corner;
 		int bestFit =  (int)Math.ceil(log2(times)) + 1;
 		
-		if (bestFit > 15) {
+		if (bestFit > 15 || bestFit < 0 ) {
 			// 15 is the granularity of about 1 mile
 			// finer granularity isn't accurate with standard java math
 			return 15;

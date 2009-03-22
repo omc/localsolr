@@ -104,6 +104,7 @@ public class CartesianPolyFilter {
 		double endY = endAt -endX; //should give a whole number
 		
 		int scale = (int)Math.log10(tierVert);
+		
 		endY = new BigDecimal(endY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 		startY = new BigDecimal(startY).setScale(scale, RoundingMode.HALF_EVEN).doubleValue();
 		log.fine("scale "+scale+" startX "+ startX + " endX "+endX +" startY "+ startY + " endY "+ endY +" tierVert "+ tierVert);
