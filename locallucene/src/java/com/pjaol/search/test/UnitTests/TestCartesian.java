@@ -166,6 +166,7 @@ public class TestCartesian extends TestCase{
 				if (dq.distanceFilter.getDistance(doc) == null)
 					return 0;
 				
+				
 				double distance = (double)dq.distanceFilter.getDistance(doc);
 				// boost score shouldn't exceed 1
 				if (distance < 1.0d)
@@ -173,7 +174,7 @@ public class TestCartesian extends TestCase{
 				//boost by distance is invertly proportional to
 				// to distance from center point to location
 				float score = new Float((miles - distance) / miles ).floatValue();
-				return score * subQueryScore;
+				return score + subQueryScore;
 			}
 		};
 		// Create a distance sort
