@@ -563,7 +563,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			if (position.containsKey(curD)){
 				 int idx = position.get(curD);
 				 distanceHolder.get(idx).incCount();
-				 distanceInclusiveHolder.get(idx).incCount();
+				 if (inclusive)
+					 distanceInclusiveHolder.get(idx).incCount();
 				 
 			} else {
 				
