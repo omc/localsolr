@@ -1,5 +1,37 @@
 $File: $
 ------------------
+Added a geofacet method
+Which performs a modules round up facet on distances
+add a geofacet 
+
+<!-- localsolr request handler -->
+<searchComponent name="localsolr"     class="com.pjaol.search.solr.component.LocalSolrQueryComponent" />
+<searchComponent name="geofacet"      class="com.pjaol.search.solr.component.LocalSolrFacetComponent"/>
+<requestHandler name="geo" class="org.apache.solr.handler.component.SearchHandler">
+    <arr name="components">
+      <str>localsolr</str>
+      <str>geofacet</str>
+      <str>mlt</str>
+      <str>highlight</str>
+      <str>debug</str>
+    </arr>
+</requestHandler>
+
+Simply extends current solr facet's, to activate geo facet add
+the parameters
+Required:
+&facet=true // enables facets display
+&facet.geo_distance=true // enable geo_distance facet
+
+Optional (defaults shown):
+&facet.geo_distance.mod=1  // float variable to uses as a modules 0.5= half mile, 1= mile etc..
+&facet.geo_distance.type=count // sort by either count or distance
+&facet.geo_distance.direction=asc // sort either asc or desc
+&facet.geo_distance.count=100 // maximum facets to display, 0 is unlimited
+&facet.geo_distance.inclusive=true // add's up previous distances so facet 19 miles, includes 0-19, 
+									// false it will be (19 - mod) to 19, say mod = 1 as default
+									// 18 to 19 miles will be the facet result.  
+------------------
 Updated to solr-1.4.0-dev
 ------------------
 Update the updateChainRequestProcessor to the solr-1.3 release

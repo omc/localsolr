@@ -25,8 +25,9 @@ import com.pjaol.search.solr.component.LocalSolrQueryComponent;
  *  &lt;/requestHandler&gt;
  * </pre>
  * @author pjaol
- *
+ * @see com.pjaol.search.solr.component.LocalSolrQueryComponent
  */
+@Deprecated
 public class LocalSolrRequestHandler extends SearchHandler {
 
 	@Override

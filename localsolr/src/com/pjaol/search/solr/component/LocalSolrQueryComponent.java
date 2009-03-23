@@ -2,6 +2,9 @@ package com.pjaol.search.solr.component;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +53,22 @@ import com.pjaol.search.solr.LocalSolrSortParser;
  * {@link LocalSolrQueryComponent} Can be loaded through
  * {@link LocalSolrRequestHandler}
  * 
+ * Can now be instantiated in solrconfig.xml as
+ * <pre>
+ * &lt;!-- local lucene request handler -->
+ * &lt;searchComponent name="localsolr"     class="com.pjaol.search.solr.component.LocalSolrQueryComponent" />
+ * &lt;searchComponent name="geofacet"      class="com.pjaol.search.solr.component.LocalSolrFacetComponent"/>
+ * &lt;requestHandler name="geo" class="org.apache.solr.handler.component.SearchHandler">
+ *   &lt;arr name="components">
+ *     &lt;str>localsolr&lt;/str>
+ *     &lt;str>facet&lt;/str> &lt;!-- or geofacet see com.pjaol.search.solr.component.LocalSolrFacetComponent -->
+ *     &lt;str>mlt&lt;/str>
+ *     &lt;str>highlight&lt;/str>
+ *     &lt;str>debug&lt;/str>
+ *   &lt;/arr>
+ * &lt;/requestHandler>
+ * </pre>
+ * 
  * @see LocalSolrRequestHandler
  * @author pjaol
  * 
@@ -76,6 +95,13 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		}
 	}
 
+	/**
+	 * Can be initialized in the solrconfig.xml with custom lat / long field names
+	 * &lt;searchComponent name="localsolr"     class="com.pjaol.search.solr.component.LocalSolrQueryComponent" />
+	 *     &lt;str name="latField">lat&lt;/str>
+   *     &lt;str name="lngField">lng&lt;/str>
+   * &lt;/searchComponent>
+	 */
 	@Override
 	public void init(NamedList initArgs) {
 
@@ -321,7 +347,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			ScoreDoc sd = new ScoreDoc(0, 1.0f); // won't work for
 			// comparators that look
 			// at the score
-			NamedList sortVals = new NamedList();
+			NamedList<ArrayList<Object>> sortVals = new NamedList<ArrayList<Object>>();
 
 			for (SortField sortField : sortFields) {
 				int type = sortField.getType();
@@ -372,6 +398,17 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			rsp.add("sort_values", sortVals);
 		}
 
+		
+		// handle custom distance facet here rather than
+		// passing all distances into the request context
+		if (params.getBool(LocalSolrParams.geo_facet, false)){
+		
+			NamedList<Integer> geo_distances_facets = facet_distances(params, distances);
+			// place in request context to let GeoDistanceFacet
+			// manage the placement in the facet list
+			req.getContext().put(LocalSolrParams.geo_facet_context, geo_distances_facets);
+		}
+		
 		if (dq.distanceFilter != null) {
 			dsort.cleanUp();
 			sort = null;
@@ -383,7 +420,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 	}
 
-	private SolrDocumentList mergeResultsDistances(DocList docs, Map distances,
+	private SolrDocumentList mergeResultsDistances(DocList docs, Map<Integer, Double> distances,
 			SolrIndexSearcher searcher, Set<String> fields, double latitude,
 			double longitude) {
 		SolrDocumentList sdoclist = new SolrDocumentList();
@@ -430,7 +467,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	}
 
 	public SolrDocument luceneDocToSolrDoc(int docid,
-			SolrIndexSearcher searcher, Set fields) throws IOException {
+			SolrIndexSearcher searcher, Set<String> fields) throws IOException {
 		Document luceneDoc = searcher.doc(docid, fields);
 
 		SolrDocument sdoc = new SolrDocument();
@@ -439,6 +476,10 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		return sdoc;
 	}
 
+	
+
+	
+	
 	/*
 	 * Solr InfoBean
 	 */
@@ -465,5 +506,161 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	public String getVersion() {
 
 		return "$Version: $";
+	}
+	
+	
+	
+	/*
+	 * Facet distances and provide a shorten method using facet.geo_distance.mod
+	 */
+	public NamedList<Integer> facet_distances(SolrParams params, Map<Integer, Double> distances){
+		NamedList<Integer> results = new NamedList<Integer>();
+		double dradius = new Double(params.get("radius")).doubleValue();
+		
+		float modifer = params.getFloat(LocalSolrParams.geo_facet_mod, 1f);
+		String type = params.get(LocalSolrParams.geo_facet_type, "count");
+		String direction = params.get(LocalSolrParams.geo_facet_dir, "asc");
+		int facet_count = params.getInt(LocalSolrParams.geo_facet_count, 100);
+		
+		boolean inclusive = params.getBool(LocalSolrParams.geo_facet_inclusive, false);
+		
+		if (facet_count <= 0)
+			facet_count = Integer.MAX_VALUE;
+		
+		int stype = DistanceFacetHolder.COUNT;
+		int sdirection = DistanceFacetHolder.ASC;
+		
+		if (type.equalsIgnoreCase("geo_distance"))
+			stype = DistanceFacetHolder.DISTANCE;
+		
+		if (direction.equalsIgnoreCase("desc"))
+			sdirection = DistanceFacetHolder.DESC;
+		
+		
+		Collection<Double> d = distances.values();
+		List<DistanceFacetHolder> distanceHolder = new ArrayList<DistanceFacetHolder>();
+		Map<Double, Integer> position = new HashMap<Double, Integer>();
+		List<DistanceFacetHolder> distanceInclusiveHolder = new ArrayList<DistanceFacetHolder>();
+		Map<Double, Integer> distanceInclusiveCounter = new HashMap<Double, Integer>();
+		
+		int pos = 0;
+		
+		// bucket and count the distances
+		for(double di: d){
+		
+			// simple modulus round up 
+			// e.g. 
+			// mod = 0.5 , distance = 0.75
+			// curD = 0.75 + (0.5 - (0.75 % 0.5)) 
+			//  ''  = 0.75 + (0.5 - (0.25))
+			//  ''  = 1
+			
+			Double curD = di + (modifer - (di % modifer));
+			
+			if (di > dradius)
+				continue;
+			
+			if (position.containsKey(curD)){
+				 int idx = position.get(curD);
+				 distanceHolder.get(idx).incCount();
+				 distanceInclusiveHolder.get(idx).incCount();
+				 
+			} else {
+				
+				distanceHolder.add(new DistanceFacetHolder(curD, stype, sdirection));
+				if (inclusive)
+					distanceInclusiveHolder.add(new DistanceFacetHolder(curD, 
+																			DistanceFacetHolder.DISTANCE, 
+																			DistanceFacetHolder.DESC));
+				position.put(curD, pos);
+				pos++;
+			}
+		}
+		int amount = 0;
+		Collections.sort(distanceHolder);
+		
+		if (inclusive){
+			Collections.sort(distanceInclusiveHolder);
+			int count = 0;
+			for(DistanceFacetHolder dfh: distanceInclusiveHolder){
+				count +=dfh.count;
+				distanceInclusiveCounter.put(dfh.distance, count);
+			}
+		}
+		
+		for(DistanceFacetHolder dfh: distanceHolder){
+			
+			if (amount <= facet_count){
+				if (inclusive)
+					results.add(dfh.distance.toString(), distanceInclusiveCounter.get(dfh.distance));
+				else	
+					results.add(dfh.distance.toString(), dfh.count);
+			}else 
+				break;
+			
+			amount ++;
+		}
+		return results;
+	}
+	
+	/*
+	 * Method for holding a collection of distances based on a key value
+	 */
+	class DistanceFacetHolder implements Comparable{
+		Double distance;
+		int count = 1; // use natural number
+		int sortD = 0;
+		int sortType = 0;
+		
+		final static int ASC =0;
+		final static int DESC =1;
+		
+		final static int DISTANCE = 0;
+		final static int COUNT = 1;
+		
+		public DistanceFacetHolder(Double curD, int type, int direction) {
+			this.distance = curD;
+			this.sortType = type;
+			this.sortD = direction;
+		}
+
+		public void incCount(){
+			this.count++;
+		}
+		
+		public void incCount(int by){
+			this.count += by;
+		}
+		
+		public int compareTo(Object arg0) {
+			DistanceFacetHolder b = (DistanceFacetHolder) arg0;
+			int result;
+			
+			// distance asc
+			if (sortType == DISTANCE){
+				
+				if (this.distance > b.distance)
+					result = -1;
+				else if (this.distance < b.distance)
+					result = 1;
+				else 
+					result = 0; 
+				
+			} else {
+						// count asc default
+				if (this.count > b.count)
+					result =  -1;
+				else if(this.count < b.count)
+					result = 1;
+				else 
+					result = 0;
+			}
+			
+			if (sortD == DESC) // if to be inverted
+				result *= -1;
+			
+			return result;
+		}
+		
 	}
 }
