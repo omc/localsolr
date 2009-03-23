@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class Shape {
 
-	private List area = new ArrayList();
+	protected List area = new ArrayList();
 	private String tierId;
 	
 	public Shape (String tierId){

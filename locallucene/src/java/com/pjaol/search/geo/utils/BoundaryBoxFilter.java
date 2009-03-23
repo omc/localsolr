@@ -5,9 +5,6 @@ package com.pjaol.search.geo.utils;
 
 import java.io.IOException;
 import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.logging.Logger;
 
 import org.apache.lucene.index.IndexReader;
@@ -22,8 +19,9 @@ import org.apache.solr.util.NumberUtils;
  * caches values extracted from the index.
  * 
  * @author pjaol
- *
+ * @deprecated
  */
+
 public class BoundaryBoxFilter extends Filter {
 
 	/**
