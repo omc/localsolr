@@ -627,8 +627,9 @@ public class LocalSolrQueryComponent extends SearchComponent {
 				if (ds > currentBucket || // distance exceeds bucket
 						(ds > dradius) ||  // distance greater than radius
 						counter > sortedDistances.size() ){ // last iteration
-					
-					i++;
+					do {
+						i++;
+					} while ((i < dbsA.length) && (ds > dbsA[i]));
 					
 					if (i < dbsA.length){
 						results.add(new Double(currentBucket).toString(), counter -1);
@@ -641,6 +642,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 						break;
 					}	
 				}
+				
 			}
 			
 			
