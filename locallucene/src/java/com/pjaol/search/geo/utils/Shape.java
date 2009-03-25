@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class Shape {
 
-	protected List area = new ArrayList();
+	protected List<Double> area = new ArrayList<Double>();
 	private String tierId;
 	
 	public Shape (String tierId){
@@ -34,7 +34,7 @@ public class Shape {
 		area.add(boxId);
 	}
 	
-	public List getArea(){
+	public List<Double> getArea(){
 		return area;
 	}
 	
