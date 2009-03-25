@@ -30,7 +30,12 @@ Optional (defaults shown):
 &facet.geo_distance.count=100 // maximum facets to display, 0 is unlimited
 &facet.geo_distance.inclusive=true // add's up previous distances so facet 19 miles, includes 0-19, 
 									// false it will be (19 - mod) to 19, say mod = 1 as default
-									// 18 to 19 miles will be the facet result.  
+									// 18 to 19 miles will be the facet result. 
+
+&facet.geo_distance.buckets= (no default) // switches the a predefinable bucket list
+										  // e.g &facet.geo_distance.buckets=0.5,1,3,8
+										  // will return inclusive facets for 0.5 miles, 1 mile, 3 etc..
+									 
 ------------------
 Updated to solr-1.4.0-dev
 ------------------

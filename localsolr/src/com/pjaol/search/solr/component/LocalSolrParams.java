@@ -9,5 +9,6 @@ public class LocalSolrParams {
 	public final static String geo_facet_dir = "facet.geo_distance.direction";
 	public final static String geo_facet_count = "facet.geo_distance.count";
 	public final static String geo_facet_inclusive = "facet.geo_distance.inclusive";
+	public final static String geo_facet_buckets = "facet.geo_distance.buckets";
 	
 }

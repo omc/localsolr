@@ -521,6 +521,14 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		String type = params.get(LocalSolrParams.geo_facet_type, "count");
 		String direction = params.get(LocalSolrParams.geo_facet_dir, "asc");
 		int facet_count = params.getInt(LocalSolrParams.geo_facet_count, 100);
+		String facet_buckets = params.get(LocalSolrParams.geo_facet_buckets);
+		
+		boolean buckets = false;
+		String [] bucketArray = null;
+		if (facet_buckets != null){
+			buckets = true;
+			bucketArray = facet_buckets.split(",");
+		}
 		
 		boolean inclusive = params.getBool(LocalSolrParams.geo_facet_inclusive, false);
 		
@@ -545,9 +553,15 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		
 		int pos = 0;
 		
+		List<Double> sortedDistances = new ArrayList<Double>();
+		
 		// bucket and count the distances
 		for(double di: d){
 		
+			if (buckets){
+				sortedDistances.add(di);
+				
+			}
 			// simple modulus round up 
 			// e.g. 
 			// mod = 0.5 , distance = 0.75
@@ -589,18 +603,64 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			}
 		}
 		
-		for(DistanceFacetHolder dfh: distanceHolder){
+		if(buckets){
+			Collections.sort(sortedDistances);
+			double[] dbsA = new double[bucketArray.length +1];
+			int i=0;
+			// create the buckets array as doubles
+			for(String dbs : bucketArray){
+				
+				dbsA[i] = new Double(dbs).doubleValue();
+				i++;
+			}
 			
-			if (amount <= facet_count){
-				if (inclusive)
-					results.add(dfh.distance.toString(), distanceInclusiveCounter.get(dfh.distance));
-				else	
-					results.add(dfh.distance.toString(), dfh.count);
-			}else 
-				break;
+			i=0;
+			int counter = 0;
+			double currentBucket = dbsA[i];
 			
-			amount ++;
+			// iterate through all the distances placing
+			// them in the appropriate buckets until radius is exceeded
+			for(double ds: sortedDistances){
+				
+				counter++; // natural numbers needed
+				
+				if (ds > currentBucket || // distance exceeds bucket
+						(ds > dradius) ||  // distance greater than radius
+						counter > sortedDistances.size() ){ // last iteration
+					
+					i++;
+					
+					if (i < dbsA.length){
+						results.add(new Double(currentBucket).toString(), counter -1);
+						currentBucket =dbsA[i];
+					}	
+					
+					if (ds > dradius){
+					// out of buckets, time to finish
+						results.add(new Double(dradius).toString(),  counter -1);
+						break;
+					}	
+				}
+			}
+			
+			
+		} else {
+
+			for (DistanceFacetHolder dfh : distanceHolder) {
+
+				if (amount <= facet_count) {
+					if (inclusive)
+						results.add(dfh.distance.toString(), distanceInclusiveCounter
+								.get(dfh.distance));
+					else
+						results.add(dfh.distance.toString(), dfh.count);
+				} else
+					break;
+
+				amount++;
+			}
 		}
+		
 		return results;
 	}
 	
