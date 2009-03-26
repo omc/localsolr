@@ -186,15 +186,6 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			}
 		}
 
-		if (filters != null) {
-			filters.add(dq.getQuery());
-
-		} else {
-			filters = new ArrayList<Query>();
-			filters.add(dq.getQuery());
-
-		}
-
 		builder.setFilters(filters);
 
 		req.getContext().put(DistanceQuery, dq);
@@ -212,8 +203,6 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		String lng = params.get("long");
 
 		
-		DocSet f = null;
-
 		// simply return id's
 		String ids = params.get("ids");
 		if (ids != null) {
@@ -247,12 +236,22 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		DistanceQuery dq = (DistanceQuery) req.getContext().get(DistanceQuery);
 
-		Filter optimizedDistanceFilter = dq.getFilter(builder.getQuery());
+		//Filter optimizedDistanceFilter = dq.getFilter(builder.getQuery());
+		List<Query> filters = builder.getFilters();
+		if (filters != null) {
+			filters.add(dq.getQuery(builder.getQuery()));
 
+		} else {
+			filters = new ArrayList<Query>();
+			filters.add(dq.getQuery(dq.getQuery(builder.getQuery())));
+
+		}
+		
+		
 		Map<Integer, Double> distances = null;
 
 		// Run the optimized geography filter
-		f = searcher.convertFilter(optimizedDistanceFilter);
+		//f = searcher.convertFilter(optimizedDistanceFilter);
 		
 		DistanceSortSource dsort = null;
 		dsort = new DistanceSortSource(dq.distanceFilter);
@@ -297,9 +296,12 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			// use a standard query
 			log.fine("Standard query...");
 
-			builder.setResults(searcher.getDocListAndSet(builder.getQuery(), f,
-					sort, params.getInt(CommonParams.START, 0), params.getInt(
-							CommonParams.ROWS, 10), builder.getFieldFlags()));
+			builder.setResults(searcher.getDocListAndSet(builder.getQuery(),
+																									filters,
+																									sort,
+																									params.getInt(CommonParams.START, 0),
+																									params.getInt(CommonParams.ROWS, 10), 
+																									builder.getFieldFlags()));
 			
 
 		} else {
@@ -307,11 +309,12 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			log.fine("DocList query....");
 			DocListAndSet results = new DocListAndSet();
 
-			log.fine("Using reqular...");
-
-			results.docList = searcher.getDocList(builder.getQuery(), f, sort,
-					params.getInt(CommonParams.START, 0), params.getInt(
-							CommonParams.ROWS, 10));
+			results.docList = searcher.getDocList(builder.getQuery(), 
+																						filters, 
+																						sort,
+																						params.getInt(CommonParams.START, 0), 
+																						params.getInt(CommonParams.ROWS, 10),
+																						builder.getFieldFlags());
 			builder.setResults(results);
 
 		}
@@ -402,8 +405,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		// handle custom distance facet here rather than
 		// passing all distances into the request context
 		if (params.getBool(LocalSolrParams.geo_facet, false)){
-		
-			NamedList<Integer> geo_distances_facets = facet_distances(params, distances);
+			
+			NamedList<Integer> geo_distances_facets = facet_distances(params,builder.getResults().docSet, distances);
 			// place in request context to let GeoDistanceFacet
 			// manage the placement in the facet list
 			req.getContext().put(LocalSolrParams.geo_facet_context, geo_distances_facets);
@@ -413,8 +416,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			dsort.cleanUp();
 			sort = null;
 			distances = null;
-			optimizedDistanceFilter = null;
-			f = null;
+//			optimizedDistanceFilter = null;
+//			f = null;
 
 		}
 
@@ -511,9 +514,9 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	
 	
 	/*
-	 * Facet distances and provide a shorten method using facet.geo_distance.mod
+	 * Facet distances and provide a round method using facet.geo_distance.mod
 	 */
-	public NamedList<Integer> facet_distances(SolrParams params, Map<Integer, Double> distances){
+	public NamedList<Integer> facet_distances(SolrParams params, DocSet docs, Map<Integer, Double> distances){
 		NamedList<Integer> results = new NamedList<Integer>();
 		double dradius = new Double(params.get("radius")).doubleValue();
 		
@@ -554,10 +557,14 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		int pos = 0;
 		
 		List<Double> sortedDistances = new ArrayList<Double>();
-		
+		DocIterator docIt = docs.iterator();
 		// bucket and count the distances
-		for(double di: d){
 		
+		while(docIt.hasNext()){
+			int docId = docIt.nextDoc();
+			
+		
+			double di = distances.get(docId);
 			if (buckets){
 				sortedDistances.add(di);
 				
@@ -616,33 +623,34 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			
 			i=0;
 			int counter = 0;
-			double currentBucket = dbsA[i];
+			double currentBucket = 0;
 			
 			// iterate through all the distances placing
 			// them in the appropriate buckets until radius is exceeded
 			for(double ds: sortedDistances){
 				
-				counter++; // natural numbers needed
 				
+				System.out.println(ds+":"+counter+":"+sortedDistances.size());
 				if (ds > currentBucket || // distance exceeds bucket
-						(ds > dradius) ||  // distance greater than radius
-						counter > sortedDistances.size() ){ // last iteration
-					do {
+						counter >= (sortedDistances.size() -1) ){ // last iteration
+					
+					while ((i < dbsA.length) && (ds > currentBucket)) {	
+						System.out.println("i="+i+" dbsA.len="+dbsA.length);
+						if (ds > currentBucket)
+							results.add(new Double(currentBucket).toString(), counter); // write the current bucket
+						
+						currentBucket = dbsA[i];
 						i++;
-					} while ((i < dbsA.length) && (ds > dbsA[i]));
+					} 
 					
-					if (i < dbsA.length){
-						results.add(new Double(currentBucket).toString(), counter -1);
-						currentBucket =dbsA[i];
-					}	
-					
-					if (ds > dradius){
+					if (i >= dbsA.length){
+						
 					// out of buckets, time to finish
-						results.add(new Double(dradius).toString(),  counter -1);
+						results.add(new Double(dradius).toString(),  sortedDistances.size());
 						break;
 					}	
 				}
-				
+				counter++; // natural numbers needed
 			}
 			
 			
