@@ -126,6 +126,10 @@ public class DistanceQuery{
 	public Query getQuery() {
 	    return new ConstantScoreQuery(getFilter());
 	}
+	
+	public Query getQuery(Query query){
+		return new ConstantScoreQuery(getFilter(query));
+	}
 	  
 	public String toString() {
 		return "DistanceQuery lat: " + lat + " lng: " + lng + " miles: "+ miles;

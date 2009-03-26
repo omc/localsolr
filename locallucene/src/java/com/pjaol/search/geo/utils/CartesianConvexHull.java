@@ -28,8 +28,10 @@ public class CartesianConvexHull extends CartesianLineString {
 			if (cd[0] > 0)
 				sign = 1;
 			
+			// generate a box id
 			double id = cd[0] + ( sign * (cd[1] / tierVerticalPositionDivider) );
 			System.out.println("==>"+id);
+			
 			cch.addBox(id);
 		}
 	
