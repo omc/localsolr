@@ -548,7 +548,6 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			sdirection = DistanceFacetHolder.DESC;
 		
 		
-		Collection<Double> d = distances.values();
 		List<DistanceFacetHolder> distanceHolder = new ArrayList<DistanceFacetHolder>();
 		Map<Double, Integer> position = new HashMap<Double, Integer>();
 		List<DistanceFacetHolder> distanceInclusiveHolder = new ArrayList<DistanceFacetHolder>();
@@ -629,13 +628,11 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			// them in the appropriate buckets until radius is exceeded
 			for(double ds: sortedDistances){
 				
-				
-				System.out.println(ds+":"+counter+":"+sortedDistances.size());
 				if (ds > currentBucket || // distance exceeds bucket
 						counter >= (sortedDistances.size() -1) ){ // last iteration
 					
 					while ((i < dbsA.length) && (ds > currentBucket)) {	
-						System.out.println("i="+i+" dbsA.len="+dbsA.length);
+						
 						if (ds > currentBucket)
 							results.add(new Double(currentBucket).toString(), counter); // write the current bucket
 						
