@@ -136,7 +136,6 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 		String lat = (String) doc.getFieldValue(latField);
 		String lng = (String) doc.getFieldValue(lngField);
 		
-		log.debug("Adding lat/lngs: "+ lat +", "+lng);
 		
 		if (lat != null && lng != null) {
 			for (CartesianTierPlotter ctp : plotters) {
