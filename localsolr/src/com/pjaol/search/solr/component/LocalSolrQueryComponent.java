@@ -18,6 +18,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.spatial.tier.DistanceFieldComparatorSource;
+import org.apache.lucene.spatial.tier.DistanceQueryBuilder;
+import org.apache.lucene.spatial.tier.DistanceSortSource;
+import org.apache.lucene.spatial.tier.DistanceUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
@@ -43,10 +47,7 @@ import org.apache.solr.search.SortSpec;
 import org.apache.solr.update.DocumentBuilder;
 import org.apache.solr.util.SolrPluginUtils;
 
-import com.pjaol.search.geo.utils.DistanceQuery;
-import com.pjaol.search.geo.utils.DistanceSortSource;
-import com.pjaol.search.geo.utils.DistanceUtils;
-import com.pjaol.search.solr.LocalSolrRequestHandler;
+
 import com.pjaol.search.solr.LocalSolrSortParser;
 
 /**
@@ -138,7 +139,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		String radius = params.get("radius");
 
-		DistanceQuery dq = null;
+		DistanceQueryBuilder dq = null;
 
 		if (lat != null && lng != null && radius != null) {
 
@@ -147,8 +148,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			double dradius = new Double(radius).doubleValue();
 
 			// TODO pull latitude /longitude from configuration
-			dq = new DistanceQuery(dlat, dlng, dradius, latField, lngField,
-					true);
+			dq = new DistanceQueryBuilder(dlat, dlng, dradius, latField, lngField,"_localTier",	true);
 
 		}
 
@@ -234,16 +234,17 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			return;
 		}
 
-		DistanceQuery dq = (DistanceQuery) req.getContext().get(DistanceQuery);
+		DistanceQueryBuilder dq = (DistanceQueryBuilder) req.getContext().get(DistanceQuery);
 
 		//Filter optimizedDistanceFilter = dq.getFilter(builder.getQuery());
 		List<Query> filters = builder.getFilters();
+		
 		if (filters != null) {
 			filters.add(dq.getQuery(builder.getQuery()));
 
 		} else {
 			filters = new ArrayList<Query>();
-			filters.add(dq.getQuery(dq.getQuery(builder.getQuery())));
+			filters.add(dq.getQuery(builder.getQuery()));
 
 		}
 		
@@ -432,7 +433,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		sdoclist.setStart(docs.offset());
 
 		DocIterator dit = docs.iterator();
-
+		//System.out.println( distances.size()+ ": "+distances.keySet());
 		while (dit.hasNext()) {
 			int docid = dit.nextDoc();
 			try {
@@ -444,7 +445,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 					double docLat = (Double) sd.getFieldValue(latField);
 					double docLong = (Double) sd.getFieldValue(lngField);
-					double distance = DistanceUtils.getDistanceMi(docLat,
+					double distance = DistanceUtils.getInstance().getDistanceMi(docLat,
 							docLong, latitude, longitude);
 
 					sd.addField("geo_distance", distance);

@@ -8,6 +8,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.spatial.tier.projections.CartesianTierPlotter;
+import org.apache.lucene.spatial.tier.projections.IProjector;
+import org.apache.lucene.spatial.tier.projections.SinusoidalProjector;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.DOMUtil;
@@ -24,9 +27,6 @@ import org.apache.solr.update.processor.UpdateRequestProcessorFactory;
 import org.apache.solr.util.NumberUtils;
 import org.w3c.dom.Node;
 
-import com.pjaol.search.geo.utils.projections.CartesianTierPlotter;
-import com.pjaol.search.geo.utils.projections.IProjector;
-import com.pjaol.search.geo.utils.projections.SinusoidalProjector;
 
 /**
  * {@link LocalUpdateProcessorFactory}
@@ -118,7 +118,7 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 	public void setupPlotters(int startTier, int endTier) {
 
 		for (int i = startTier; i < endTier; i++) {
-			plotters.add(new CartesianTierPlotter(i, projector));
+			plotters.add(new CartesianTierPlotter(i, projector, "_localTier"));
 		}
 
 	}
