@@ -1,5 +1,13 @@
 $File: $
 ------------------
+Killing off locallucene dependency and replacing it with spatial lucene- which
+is locallucene donated to Apache lucene project.
+
+The spatial lucene jar is in libs/lucene/luene-spatial-x.x.jar
+This also removes dependencies on LGPL geotools libraries.
+
+
+------------------
 Added a geofacet method
 Which performs a modules round up facet on distances
 add a geofacet 

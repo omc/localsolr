@@ -439,8 +439,18 @@ public class LocalSolrQueryComponent extends SearchComponent {
 			try {
 				SolrDocument sd = luceneDocToSolrDoc(docid, searcher, fields);
 				if (distances != null) {
-					sd.addField("geo_distance", new String(distances.get(docid)
-							.toString()).toString());
+					
+					if (distances.containsKey(docid))
+						sd.addField("geo_distance", new String(distances.get(docid).toString()).toString());
+					else{
+						double docLat = (Double) sd.getFieldValue(latField);
+						double docLong = (Double) sd.getFieldValue(lngField);
+						double distance = DistanceUtils.getInstance().getDistanceMi(docLat,
+								docLong, latitude, longitude);
+
+						sd.addField("geo_distance", distance);
+					}
+						
 				} else {
 
 					double docLat = (Double) sd.getFieldValue(latField);
