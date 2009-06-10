@@ -254,8 +254,8 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		// Run the optimized geography filter
 		//f = searcher.convertFilter(optimizedDistanceFilter);
 		
-		DistanceSortSource dsort = null;
-		dsort = new DistanceSortSource(dq.distanceFilter);
+		DistanceFieldComparatorSource dsort = null;
+		dsort = new DistanceFieldComparatorSource(dq.distanceFilter);
 
 		// Parse sort
 		String sortStr = params.get(CommonParams.SORT);

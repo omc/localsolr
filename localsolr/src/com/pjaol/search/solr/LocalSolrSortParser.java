@@ -19,7 +19,7 @@ public class LocalSolrSortParser {
 	private String stringValue;
 	
 	public SortSpec parseSort(String sortSpec,
-			IndexSchema schema,  DistanceSortSource ds) {
+			IndexSchema schema,  DistanceFieldComparatorSource ds) {
 		if (sortSpec == null || sortSpec.length() == 0)
 			return null;
 
