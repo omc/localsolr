@@ -650,7 +650,11 @@ public class LocalSolrQueryComponent extends SearchComponent {
 						currentBucket = dbsA[i];
 						i++;
 					} 
-					
+                    if (counter >= (sortedDistances.size() -1)&&ds <= currentBucket&&currentBucket>0){
+                        // last bucket
+                        results.add(new Double(currentBucket).toString(), sortedDistances.size()); 
+                        break;
+                    }
 					if (i >= dbsA.length){
 						
 					// out of buckets, time to finish
