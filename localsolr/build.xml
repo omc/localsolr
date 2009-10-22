@@ -27,9 +27,6 @@
 		<fileset dir="${lucene.dir}">
 		  <include name="*.jar"/>
 		</fileset>
-		<fileset dir="${locallucene.dir}">
-			<include name="*.jar"/>
-		</fileset>
 	</path>
     <!-- ================================= 
           target: default              
