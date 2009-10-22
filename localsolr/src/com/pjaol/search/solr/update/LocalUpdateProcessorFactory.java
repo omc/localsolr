@@ -133,15 +133,29 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 	public void processAdd(AddUpdateCommand cmd) throws IOException {
 		SolrInputDocument doc = cmd.getSolrInputDocument();
 
-		String lat = (String) doc.getFieldValue(latField);
-		String lng = (String) doc.getFieldValue(lngField);
 		
+		Object lat =  doc.getFieldValue(latField);
+		Object lng =  doc.getFieldValue(lngField);
+		
+		Double dLat = 0.0, dLng= 0.0;
+		
+		if (lat instanceof String){
+			dLat = new Double((String) lat);
+		} else {
+			dLat = (Double)lat;
+		}
+		
+		if (lng instanceof String){
+			dLng = new Double((String) lng);
+		} else {
+			dLng = (Double)lng;
+		}
 		
 		if (lat != null && lng != null) {
 			for (CartesianTierPlotter ctp : plotters) {
 
 				doc.addField(ctp.getTierFieldName(), ctp.getTierBoxId(
-						new Double(lat), new Double(lng)));
+						dLat, dLng));
 			}
 		}
 		if (next != null)
