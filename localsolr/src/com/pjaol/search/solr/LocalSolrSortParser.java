@@ -18,7 +18,7 @@ public class LocalSolrSortParser {
 	private String stringValue;
 	
 	public SortSpec parseSort(String sortSpec,
-			IndexSchema schema,  DistanceFieldComparatorSource ds) {
+			IndexSchema schema,  DistanceFieldComparatorSource ds, String distanceField) {
 		if (sortSpec == null || sortSpec.length() == 0)
 			return null;
 
@@ -63,9 +63,9 @@ public class LocalSolrSortParser {
 				} else {
 					lst[i] = new SortField(null, SortField.SCORE, true);
 				}
-			} else if (part.equals("geo_distance")) {
+			} else if (part.equals(distanceField)) {
 			
-				lst[i] = new SortField("geo_distance", ds, top);
+				lst[i] = new SortField(distanceField, ds, top);
 			
 			} else {
 				// getField could throw an exception if the name isn't found

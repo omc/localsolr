@@ -57,6 +57,8 @@ public class LocalUpdateProcessorFactory extends UpdateRequestProcessorFactory {
 	String latField = "lat";
 
 	String lngField = "lng";
+	
+	String tierPrefix = "_localTier";
 
 	int cartesianStartTier = 6;
 
@@ -70,6 +72,7 @@ public class LocalUpdateProcessorFactory extends UpdateRequestProcessorFactory {
 			SolrParams params = SolrParams.toSolrParams(args);
 			latField = params.get("latField", latField);
 			lngField = params.get("lngField", lngField);
+			tierPrefix = params.get("tierPrefix", tierPrefix);
 			cartesianStartTier = params.getInt("startTier", cartesianStartTier);
 			cartesianEndTier = params.getInt("endTier", cartesianEndTier);
 		}
@@ -80,7 +83,7 @@ public class LocalUpdateProcessorFactory extends UpdateRequestProcessorFactory {
 			SolrQueryResponse rsp, UpdateRequestProcessor next) {
 
 		LocalUpdaterProcessor lup = new LocalUpdaterProcessor(next);
-		lup.setup(latField, lngField,
+		lup.setup(latField, lngField, tierPrefix,
 				cartesianStartTier, cartesianEndTier, next);
 		
 		return lup;
@@ -93,7 +96,7 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 
 	int startTier, endTier;
 
-	String latField, lngField;
+	String latField, lngField, tierPrefix;
 
 	UpdateRequestProcessor next;
 
@@ -103,22 +106,23 @@ class LocalUpdaterProcessor extends UpdateRequestProcessor {
 		super(next);
 	}
 	
-	public void setup(String latField, String lngField,
+	public void setup(String latField, String lngField, String tierPrefix,
 			int startTier, int endTier, UpdateRequestProcessor next) {
 
 		this.latField = latField;
 		this.lngField = lngField;
+		this.tierPrefix = tierPrefix;
 		this.startTier = startTier;
 		this.endTier = endTier;
 		this.next = next;
 
-		setupPlotters(startTier, endTier);
+		setupPlotters(startTier, endTier, tierPrefix);
 	}
 
-	public void setupPlotters(int startTier, int endTier) {
+	public void setupPlotters(int startTier, int endTier, String tierPrefix) {
 
 		for (int i = startTier; i < endTier; i++) {
-			plotters.add(new CartesianTierPlotter(i, projector, "_localTier"));
+			plotters.add(new CartesianTierPlotter(i, projector, tierPrefix));
 		}
 
 	}

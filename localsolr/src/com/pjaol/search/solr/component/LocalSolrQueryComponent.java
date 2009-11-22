@@ -79,40 +79,39 @@ public class LocalSolrQueryComponent extends SearchComponent {
 	private Logger log = Logger.getLogger(getClass().getName());
 	private String latField = "lat";
 	private String lngField = "lng";
+	private String tierPrefix = "_localTier";
+	private String distanceField = "geo_distance";
 
 	public LocalSolrQueryComponent() {
 
 	}
 
-	public LocalSolrQueryComponent(String lat, String lng) {
-
-		if (lat != null && lng != null) {
-			log.info("Setting latField to " + lat + " setting lngField to "
-					+ lng);
-			latField = lat;
-			lngField = lng;
-		}
+	public LocalSolrQueryComponent(String lat, String lng, String tp, String df) {
+	  initializeFields(lat, lng, tp, df);
 	}
 
+	public void initializeFields(String lat, String lng, String tp, String df) {
+		log.info("initializingGeoFields: Setting latField to '" + lat + "' setting lngField to '"
+					+ lng + "' setting tierPrefix to '" + tp + "' setting distanceField to '" + df + "'");
+		if (lat != null) this.latField = lat;
+		if (lng != null) this.lngField = lng;
+		if (tp != null) this.tierPrefix = tp;
+		if (df != null) this.distanceField = df;
+	}
+	
 	/**
-	 * Can be initialized in the solrconfig.xml with custom lat / long field
-	 * names &lt;searchComponent name="localsolr"
+	 * Can be initialized in the solrconfig.xml with custom lat / long / tp / distance
+	 * field names &lt;searchComponent name="localsolr"
 	 * class="com.pjaol.search.solr.component.LocalSolrQueryComponent" />
 	 * &lt;str name="latField">lat&lt;/str> &lt;str name="lngField">lng&lt;/str>
 	 * &lt;/searchComponent>
 	 */
 	@Override
 	public void init(NamedList initArgs) {
-
-		String lat = (String) initArgs.get("latField");
-		String lng = (String) initArgs.get("lngField");
-
-		if (lat != null && lng != null) {
-			log.info("Setting latField to " + lat + " setting lngField to "
-					+ lng);
-			latField = lat;
-			lngField = lng;
-		}
+	  initializeFields((String) initArgs.get("latField"),
+	                   (String) initArgs.get("lngField"),
+	                   (String) initArgs.get("tierPrefix"),
+	                   (String) initArgs.get("distanceField"));
 	}
 
 	public void prepare(ResponseBuilder builder) throws IOException {
@@ -147,7 +146,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 			// TODO pull latitude /longitude from configuration
 			dq = new DistanceQueryBuilder(dlat, dlng, dradius, latField,
-					lngField, "_localTier", true);
+					lngField, tierPrefix, true);
 
 		}
 
@@ -279,7 +278,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 
 		if (sortStr != null) {
 			SortSpec lss = new LocalSolrSortParser().parseSort(sortStr, req
-					.getSchema(), dsort);
+					.getSchema(), dsort, distanceField);
 			if (lss != null) {
 				builder.setSortSpec(lss);
 			}
@@ -369,7 +368,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 						// the object
 						try {
 							if (type == SortField.CUSTOM
-									&& (!fieldname.equals("geo_distance"))) {
+									&& (!fieldname.equals(distanceField))) {
 								// assume it's a double, as there's a bug in
 								// sdouble type
 								vals.add(ft.toInternal(new Double(
@@ -435,7 +434,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 				if (distances != null) {
 
 					if (distances.containsKey(docid))
-						sd.addField("geo_distance", new String(distances.get(
+						sd.addField(distanceField, new String(distances.get(
 								docid).toString()).toString());
 					else {
 						double docLat = (Double) sd.getFieldValue(latField);
@@ -444,7 +443,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 								.getDistanceMi(docLat, docLong, latitude,
 										longitude);
 
-						sd.addField("geo_distance", distance);
+						sd.addField(distanceField, distance);
 					}
 
 				} else {
@@ -455,7 +454,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 							.getInstance()
 							.getDistanceMi(docLat, docLong, latitude, longitude);
 
-					sd.addField("geo_distance", distance);
+					sd.addField(distanceField, distance);
 				}
 
 				// this may be removed if XMLWriter gets patched to
@@ -545,7 +544,7 @@ public class LocalSolrQueryComponent extends SearchComponent {
 		int stype = DistanceFacetHolder.COUNT;
 		int sdirection = DistanceFacetHolder.ASC;
 
-		if (type.equalsIgnoreCase("geo_distance"))
+		if (type.equalsIgnoreCase(distanceField))
 			stype = DistanceFacetHolder.DISTANCE;
 
 		if (direction.equalsIgnoreCase("desc"))

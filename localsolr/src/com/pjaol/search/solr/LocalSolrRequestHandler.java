@@ -36,9 +36,11 @@ public class LocalSolrRequestHandler extends SearchHandler {
 		super.inform(core);
 		String latField = (String) initArgs.get("latField");
 		String lngField = (String) initArgs.get("lngField");
+		String tierPrefix = (String) initArgs.get("tierPrefix");
+		String distanceField = (String) initArgs.get("distanceField");
 		
 		components = new ArrayList<SearchComponent>(5);
-		components.add(new LocalSolrQueryComponent(latField, lngField));
+		components.add(new LocalSolrQueryComponent(latField, lngField, tierPrefix, distanceField));
 		components.add(new FacetComponent());
 		components.add(new MoreLikeThisComponent());
 		components.add(new HighlightComponent());
