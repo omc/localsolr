@@ -1,5 +1,12 @@
 $File: $
 ------------------
+Updating to Latest version of solr-1.4 release / 1.5 dev (don't ask me why it's called 1.5)
+Changes are required to schema.xml
+lat / long and _local* fields now need to be changed to "tdouble"
+and a reindex has to be done. This is due to a conflict between Solr's sortable double fields
+and lucene numeric utils, which has been updated to tierFields for FieldCache doubles.
+
+------------------
 Killing off locallucene dependency and replacing it with spatial lucene- which
 is locallucene donated to Apache lucene project.
 

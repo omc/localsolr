@@ -5,7 +5,6 @@ import java.util.regex.Pattern;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.spatial.tier.DistanceFieldComparatorSource;
-import org.apache.lucene.spatial.tier.DistanceSortSource;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
