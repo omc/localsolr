@@ -3,7 +3,7 @@ package com.pjaol.search;
 public class Constants {
 	
 	public final static String KML_HEADER= 
-		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		+"<kml xmlns=\"http://www.opengis.net/kml/2.2\">";
 	
 	public final static String KML_PLACE_MARKER_HEADER=	"<Placemark>\n";
