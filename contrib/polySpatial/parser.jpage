@@ -1,0 +1,17 @@
+
+Pattern points = Pattern.compile("[^\\(](.*?)\\)");
+String p = "(-37.43824119865275,-122.13775634764588)(37.43824119865275,-122.13876773332271)(37.43612168200744,-122.13775634764588)(37.43612168200744,-122.13876773332271)";
+System.out.println("Starting...");
+Matcher m = points.matcher(p);
+
+while(m.find()){
+	
+	String cp = m.group();
+	cp = cp.replaceAll("\\)", "");
+	String[] ll = cp.split(",");
+System.out.println(cp);
+	double lat, lng;
+	lat = new Double(ll[0]);
+	lng = new Double(ll[1]);
+}
+ 

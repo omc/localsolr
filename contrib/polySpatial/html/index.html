@@ -1,0 +1,79 @@
+<html>
+<head><title>Test Maps</title>
+<link type="text/css" rel="stylesheet" href="gmap.css" />
+
+  <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true_or_false&amp;key=ABQIAAAAa-H9kjTc4A0yBB2AMq4A8hTwM0brOpm-All5BF6PoaKBxRWWERRwR4LjRNqke6fuVY5ev4__BDdzKA" type="text/javascript"></script>
+<script src="geoxmlfull.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+    var geoXml; 
+    
+    function initialize() {
+      if (GBrowserIsCompatible()) {
+        var control_points="";
+        var map = new GMap2(document.getElementById("map_canvas"));
+        map.setCenter(new GLatLng(37.4419, -122.1419), 13);
+ 
+        // Add 10 markers to the map at random locations
+        var bounds = map.getBounds();
+        var southWest = bounds.getSouthWest();
+        var northEast = bounds.getNorthEast();
+        var lngSpan = (northEast.lng() - southWest.lng()) / 10 ;
+        var latSpan = (northEast.lat() - southWest.lat()) / 10;
+
+       GEvent.addListener(map, "click", function(overlay,latlng) {
+          var lat = latlng.lat();
+          var lon = latlng.lng();
+          var latOffset = 0.01;
+          var lonOffset = 0.01;
+          var lat1 = lat + latOffset;
+          var lon1 = lon - lonOffset;
+          var lat2 = lat - latOffset;
+          var lon2 = lon + lonOffset;
+		  map.clearOverlays();
+		  
+	  var polygon = new GPolygon([
+            new GLatLng(lat, lon1),
+            new GLatLng(lat1, lon),
+            new GLatLng(lat, lon2),
+            new GLatLng(lat2, lon),
+            new GLatLng(lat, lon1)
+			     ], "#f33f00", 1, 0.8, "#ff0000", 0.2);
+          map.addOverlay(polygon);
+
+
+			var cacheBuster = Math.random();
+			var url = "http://localhost:8080/polySpatial/kml?points=("+lat+","+lon1+")("+lat1+","+lon+")("+lat+","+lon2+")("+lat2+","+ lon+")("+lat+","+ lon1+")&cb="+cacheBuster
+			
+			
+			if (typeof(geoXML) != "undefined")
+				geoXML.clear();
+			
+			geoXML = new GeoXml("geoXML", map,url, {sidebarid:"control_points",  iwwidth:520, allfoldersopen:false, iconFromDescription:false, domouseover:false, color:"#000000", fillcolor:"#000000", fillOpacity:0.9}); 
+
+			//geoXML.parse("LinearRing.kml");
+			geoXML.parse("foo");
+			
+		    
+        });
+
+      }
+   
+    }
+
+    </script>
+  </head>
+
+<body onload="initialize()" onunload="GUnload()">
+  <div id="holder" style="width: 1020px; height:300px">
+    <div id="left_holder" style="width:500px; height:500px; float:left">
+      <div id="map_canvas" style="width: 500px; height: 300px; float:left"></div>
+      <div id="poly_shapes" style="width:500px; height:200px; float:left"></div>
+    </div>
+    <div id="control_points" style="width: 520px; height: 100px; float:left"></div>
+
+  </div>
+</body>
+
+
+</html>
